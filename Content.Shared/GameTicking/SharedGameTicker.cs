@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Shared.StateManipulation;
 using Robust.Shared.Map;
 using Robust.Shared.Network;
@@ -24,6 +25,8 @@ public abstract partial class SharedGameTicker : EntitySystem
     private bool _isGameInitialized;
     protected bool _isServer;
     
+    public EntityUid MapUid;
+    
     public override void Initialize()
     {
         
@@ -35,5 +38,9 @@ public abstract partial class SharedGameTicker : EntitySystem
             throw new Exception();
 
         _isGameInitialized = true;
+
+        MapUid = MapSystem.CreateMap();
+        Spawn("MobWalter", new EntityCoordinates(MapUid, Vector2.One));
+        //MapSystem.SetAmbientLight(MapUid, Color.FromHex("#ffffff"));
     }
 }

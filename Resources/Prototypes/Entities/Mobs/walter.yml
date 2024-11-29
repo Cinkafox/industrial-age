@@ -1,0 +1,11 @@
+- type: entity
+  name: Walter
+  id: MobWalter
+  description: He likes chems and treats. Walter.
+  components:
+    - type: Sprite
+      sprite: Entities/Mobs/walter.rsi
+      layers:
+        - state: walter
+    - type: Eye
+      zoom: 0.5,0.5

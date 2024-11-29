@@ -43,6 +43,8 @@ public sealed class ConnectingState : State
     {
         _clientNetManager.ConnectFailed -= OnConnectFailed;
         _clientNetManager.ClientConnectStateChanged -= OnConnectStateChanged;
+        
+        _userInterfaceManager.StateRoot.RemoveChild(MessageContainer);
     }
     
     private void OnConnectStateChanged(ClientConnectionState state)

@@ -1,4 +1,5 @@
 using Content.Server.Acz;
+using Content.Server.GameTicking;
 using Robust.Server.ServerStatus;
 using Robust.Shared.ContentPack;
 using Robust.Shared.IoC;
@@ -17,5 +18,10 @@ public sealed class EntryPoint : GameServer
     {
         var aczProvider = new ContentMagicAczProvider(IoCManager.Resolve<IDependencyCollection>());
         IoCManager.Resolve<IStatusHost>().SetMagicAczProvider(aczProvider);
+    }
+
+    public override void PostInit()
+    {
+        IoCManager.Resolve<EntityManager>().System<GameTicker>().InitializeGame();
     }
 }

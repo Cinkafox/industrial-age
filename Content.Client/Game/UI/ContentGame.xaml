@@ -1,7 +1,19 @@
-<ui1:ContentGame
+<ui:ContentGame
+    HorizontalAlignment="Center"
+    Name="DefaultHud"
+    VerticalAlignment="Bottom"
+    VerticalExpand="False"
     xmlns="https://spacestation14.io"
-    xmlns:ui1="clr-namespace:Content.Client.Game.UI">
-    <BoxContainer>
-        <Label Text="Hello there!"/>
-    </BoxContainer>
-</ui1:ContentGame>
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    xmlns:ui="clr-namespace:Content.Client.Game.UI">
+    <LayoutContainer
+        HorizontalExpand="True"
+        Name="ViewportContainer"
+        VerticalExpand="True">
+        <controls:MainViewport Name="MainViewport" />
+    </LayoutContainer>
+    <BoxContainer
+        Access="Protected"
+        Name="TopLeft"
+        Orientation="Vertical" />
+</ui:ContentGame>
