@@ -1,0 +1,7 @@
+<ui1:ContentGame
+    xmlns="https://spacestation14.io"
+    xmlns:ui1="clr-namespace:Content.Client.Game.UI">
+    <BoxContainer>
+        <Label Text="Hello there!"/>
+    </BoxContainer>
+</ui1:ContentGame>
