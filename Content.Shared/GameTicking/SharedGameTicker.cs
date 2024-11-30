@@ -39,8 +39,8 @@ public abstract partial class SharedGameTicker : EntitySystem
 
         _isGameInitialized = true;
 
-        MapUid = MapSystem.CreateMap();
-        Spawn("MobWalter", new EntityCoordinates(MapUid, Vector2.One));
-        //MapSystem.SetAmbientLight(MapUid, Color.FromHex("#ffffff"));
+        MapUid = MapSystem.CreateMap(out var mapId);
+        Spawn("EntFemale", new EntityCoordinates(MapUid, Vector2.One));
+        MapSystem.SetAmbientLight(mapId, Color.FromHex("#ffffff"));
     }
 }

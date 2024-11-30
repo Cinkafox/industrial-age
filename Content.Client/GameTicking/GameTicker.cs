@@ -1,9 +1,8 @@
 using Content.Shared.GameTicking;
 using Robust.Client;
-using Robust.Shared.Player;
 using Robust.Shared.Timing;
 
-namespace Content.Client.GameTiming;
+namespace Content.Client.GameTicking;
 
 public sealed class GameTicker : SharedGameTicker
 {

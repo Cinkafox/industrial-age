@@ -1,5 +1,4 @@
 using Content.Client.Connection;
-using Content.Client.GameTiming;
 using Content.Shared.Input;
 using Robust.Client;
 using Robust.Client.Graphics;
@@ -37,9 +36,6 @@ public sealed class EntryPoint : GameClient
        ContentContexts.SetupContexts(_inputManager.Contexts);
        _userInterfaceManager.SetDefaultTheme("DefaultTheme");
        _userInterfaceManager.MainViewport.Visible = false;
-
-       IoCManager.Resolve<ILightManager>().DrawLighting = false;
-       IoCManager.Resolve<ILightManager>().DrawShadows = false;
        
        _baseClient.RunLevelChanged += (_, args) =>
        {

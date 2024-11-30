@@ -163,7 +163,6 @@ namespace Content.Client.Viewport
 
             var drawBox = GetDrawBox();
             var drawBoxGlobal = drawBox.Translated(GlobalPixelPosition);
-            handle.DrawRect(drawBox, Color.Aqua);
             _viewport.RenderScreenOverlaysBelow(handle, this, drawBoxGlobal);
             handle.DrawTextureRect(_viewport.RenderTarget.Texture, drawBox);
             _viewport.RenderScreenOverlaysAbove(handle, this, drawBoxGlobal);

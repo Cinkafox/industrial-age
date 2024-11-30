@@ -1,0 +1,31 @@
+- type: entity
+  name: Female
+  id: EntFemale
+  description: Test think
+  components:
+    - type: Sprite
+      sprite: Entities/Test/female.yml
+      layers:
+        - state: human
+    - type: Eye
+      zoom: 0.5,0.5
+    - type: Fixtures
+      fixtures:
+        fix1:
+          shape:
+            !type:PhysShapeCircle
+            radius: 0.35
+          density: 50
+          mask:
+            - MobMask
+          layer:
+            - MobLayer
+    - type: Input
+      context: "human"
+    - type: InputMover
+    - type: Physics
+      bodyType: KinematicController
+    - type: LagCompensation
+    - type: RotationVisuals
+      defaultRotation: 0
+      horizontalRotation: 0
