@@ -53,9 +53,9 @@ public sealed class EntryPoint : GameClient
     {
         if (!_gameController.LaunchState.FromLauncher)
         {
-            //_baseClient.ConnectToServer("127.0.0.1",1212);
-            _baseClient.StartSinglePlayer();
-            return;
+            _baseClient.ConnectToServer("127.0.0.1",1212);
+            //_baseClient.StartSinglePlayer();
+            //return;
         }
 
         _stateManager.RequestStateChange<ConnectingState>();

@@ -1,6 +1,7 @@
 using System.Numerics;
 using Content.Shared.StateManipulation;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
@@ -26,6 +27,7 @@ public abstract partial class SharedGameTicker : EntitySystem
     protected bool _isServer;
     
     public EntityUid MapUid;
+    public Entity<MapGridComponent> GridUid;
     
     public override void Initialize()
     {
@@ -40,7 +42,23 @@ public abstract partial class SharedGameTicker : EntitySystem
         _isGameInitialized = true;
 
         MapUid = MapSystem.CreateMap(out var mapId);
-        Spawn("EntFemale", new EntityCoordinates(MapUid, Vector2.One));
+        GridUid = MapManager.CreateGridEntity(MapUid,GridCreateOptions.Default);
+        
+        var width = 55;
+        var height = 55;
+        
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                var sx = x - width / 2;
+                var sy= y - height / 2;
+                
+                MapSystem.SetTile(GridUid, new Vector2i(sx,sy),new Robust.Shared.Map.Tile(1));
+            }
+        }
+        
+        Spawn("EntFemale", new EntityCoordinates(GridUid, Vector2.One));
         MapSystem.SetAmbientLight(mapId, Color.FromHex("#ffffff"));
     }
 }

@@ -11,7 +11,7 @@ public partial class SharedGameTicker
         if (_isServer != _netManager.IsServer) 
             throw new Exception(); //Client tries to add a session for server?
 
-        var euid = Spawn("EntFemale", new EntityCoordinates(MapUid, Vector2.Zero));
+        var euid = Spawn("EntFemale", new EntityCoordinates(GridUid, Vector2.Zero));
         PlayerManager.SetAttachedEntity(session, euid);
         ContentStateManager.SetState(session,"Content.Client.Game.GameState");
     }

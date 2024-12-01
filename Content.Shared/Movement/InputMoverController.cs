@@ -2,19 +2,15 @@ using System.Numerics;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Network;
+using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Controllers;
 using Robust.Shared.Physics.Systems;
-using Robust.Shared.Player;
 using Robust.Shared.Timing;
 
 namespace Content.Shared.Movement;
 
 public sealed class InputMoverController : VirtualController
 {
-    [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
-    [Dependency] private readonly SharedPhysicsSystem _physicsSystem = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-
     private EntityQuery<InputMoverComponent> _inputMoverQuery;
     
     public override void Initialize()
@@ -30,52 +26,49 @@ public sealed class InputMoverController : VirtualController
             .Register<InputMoverController>();
     }
 
-    public void HandleDirChange(EntityUid sessionAttachedEntity, Angle angle, ushort messageSubTick, bool b)
+    public void HandleDirChange(EntityUid sessionAttachedEntity, Angle angle, ushort messageSubTick, bool isDown)
     {
         if(!_inputMoverQuery.TryComp(sessionAttachedEntity, out var inputMoverComponent))
             return;
 
-        inputMoverComponent.Direction = angle;
-        inputMoverComponent.Magnitude = b ? 1f : 0f;
+        if (isDown)
+        {
+            inputMoverComponent.Direction = angle;
+            inputMoverComponent.PushedButtonCount += 1;
+        }
+        else
+        {
+            inputMoverComponent.PushedButtonCount -= 1;
+        }
+
+        inputMoverComponent.Magnitude = inputMoverComponent.PushedButtonCount > 0 ? 1f : 0f;
     }
 
     public override void UpdateBeforeSolve(bool prediction, float frameTime)
     {
         base.UpdateBeforeSolve(prediction, frameTime);
+        
+        var query = EntityQueryEnumerator<InputMoverComponent,TransformComponent, PhysicsComponent>();
 
-        if(!_timing.InSimulation) 
-            return;
-        var query = EntityQueryEnumerator<InputMoverComponent,TransformComponent>();
-
-        while (query.MoveNext(out var uid, out var inputMoverComponent, out var transformComponent))
+        while (query.MoveNext(out var uid, out var inputMoverComponent, out var transformComponent, out var physicsComponent))
         {
-            var delta = transformComponent.LocalRotation - inputMoverComponent.Direction;
-            transformComponent.LocalRotation = inputMoverComponent.Direction;
-            //_physicsSystem.ApplyTorque(uid, (float)(1f * delta));
-            //Logger.Debug(inputMoverComponent.Magnitude + "");
-            //_physicsSystem.ApplyForce(uid, transformComponent.LocalRotation.RotateVec(new Vector2(inputMoverComponent.Magnitude * 10, 0)));
-            transformComponent.LocalPosition +=
-                transformComponent.LocalRotation.RotateVec(new Vector2(0, -inputMoverComponent.Magnitude * 0.2f));
+            var delta = (transformComponent.LocalRotation - inputMoverComponent.Direction).Normalise();
+            
+            PhysicsSystem.SetAngularVelocity(uid, -(float)delta * 8f);
+            PhysicsSystem.SetLinearVelocity(uid,
+                transformComponent.LocalRotation.RotateVec(new Vector2(0, -inputMoverComponent.Magnitude*4f)));
         }
     }
 }
 
-sealed class MoverDirInputCmdHandler : InputCmdHandler
+public static class AngleExt
 {
-    private readonly InputMoverController _controller;
-    private readonly Angle _angle;
-
-    public MoverDirInputCmdHandler(InputMoverController controller, Direction direction)
+    public static Angle Normalise(this Angle angle)
     {
-        _controller = controller;
-        _angle = direction.ToAngle();
-    }
-
-    public override bool HandleCmdMessage(IEntityManager entManager, ICommonSession? session, IFullInputCmdMessage message)
-    {
-        if (session?.AttachedEntity == null) return false;
-        
-        _controller.HandleDirChange(session.AttachedEntity.Value, _angle, message.SubTick, message.State == BoundKeyState.Down);
-        return false;
+        while (angle > MathF.PI)
+            angle -= 2 * MathF.PI;
+        while (angle < -MathF.PI)
+            angle += 2 * MathF.PI;
+        return angle;
     }
 }
