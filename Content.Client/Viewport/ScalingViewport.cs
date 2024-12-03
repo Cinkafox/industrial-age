@@ -182,35 +182,13 @@ namespace Content.Client.Viewport
             var vpSize = _viewport!.Size;
             var ourSize = (Vector2) PixelSize;
 
-            if (FixedStretchSize == null)
-            {
-                var (ratioX, ratioY) = ourSize / vpSize;
-                var ratio = 1f;
-                switch (_ignoreDimension)
-                {
-                    case ScalingViewportIgnoreDimension.None:
-                        ratio = Math.Min(ratioX, ratioY);
-                        break;
-                    case ScalingViewportIgnoreDimension.Vertical:
-                        ratio = ratioX;
-                        break;
-                    case ScalingViewportIgnoreDimension.Horizontal:
-                        ratio = ratioY;
-                        break;
-                }
+            var (ratioX, ratioY) = ourSize / vpSize;
+            var ratio = ratioX;
 
-                var size = vpSize * ratio;
-                // Size
-                var pos = (ourSize - size) / 2;
+            var size = vpSize * ratio;
+            var pos = (ourSize - size) / 2;
 
-                return (UIBox2i) UIBox2.FromDimensions(pos, size);
-            }
-            else
-            {
-                // Center only, no scaling.
-                var pos = (ourSize - FixedStretchSize.Value) / 2;
-                return (UIBox2i) UIBox2.FromDimensions(pos, FixedStretchSize.Value);
-            }
+            return (UIBox2i) UIBox2.FromDimensions(pos, size);
         }
 
         private void RegenerateViewport()

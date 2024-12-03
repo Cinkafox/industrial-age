@@ -15,5 +15,7 @@
     <BoxContainer
         Access="Protected"
         Name="TopLeft"
-        Orientation="Vertical" />
+        Orientation="Vertical" >
+        <Label Text="GI!"/>
+    </BoxContainer>
 </ui:ContentGame>

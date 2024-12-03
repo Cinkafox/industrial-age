@@ -9,7 +9,7 @@
         - state: human
       noRot: true
     - type: Eye
-      zoom: 0.5,0.5
+      #zoom: 0.5,0.5
     - type: Fixtures
       fixtures:
         fix1:
