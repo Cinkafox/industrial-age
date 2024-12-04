@@ -4,6 +4,9 @@
     <option name="projectPerEditor">
       <map>
         <entry key="Content.Client/Game/UI/ContentGame.xaml" value="Content.Client/Content.Client.csproj" />
+        <entry key="Content.Client/UserInterface/Systems/Indicators/Controls/IndicatorProgressBar.xaml" value="Content.Client/Content.Client.csproj" />
+        <entry key="Content.Client/UserInterface/Systems/Indicators/Controls/PlayerIndicator.xaml" value="Content.Client/Content.Client.csproj" />
+        <entry key="Content.Client/UserInterface/Systems/Indicators/Controls/UserControl1.axaml" value="Content.Client/Content.Client.csproj" />
       </map>
     </option>
   </component>

@@ -1,0 +1,15 @@
+<controls:PlayerIndicator
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Systems.Indicators.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <BoxContainer Orientation="Horizontal">
+        <SpriteView
+            Margin="5"
+            Name="PlayerRect"
+            Scale="2 2"
+            SetSize="64 64" />
+        <BoxContainer Margin="5" Orientation="Vertical">
+            <controls:IndicatorProgressBar />
+        </BoxContainer>
+    </BoxContainer>
+</controls:PlayerIndicator>

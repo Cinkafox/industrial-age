@@ -1,0 +1,17 @@
+<controls:IndicatorProgressBar
+    HorizontalExpand="True"
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Systems.Indicators.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <BoxContainer HorizontalExpand="True" Orientation="Horizontal">
+        <ProgressBar
+            HorizontalExpand="True"
+            Margin="10,10,0,0"
+            MaxValue="1"
+            MinHeight="25"
+            MinValue="0"
+            Page="0"
+            Value="0.5" />
+        <Label Text="HP" />
+    </BoxContainer>
+</controls:IndicatorProgressBar>

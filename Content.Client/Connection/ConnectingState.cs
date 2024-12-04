@@ -36,7 +36,7 @@ public sealed class ConnectingState : State
         _clientNetManager.ConnectFailed += OnConnectFailed;
         _clientNetManager.ClientConnectStateChanged += OnConnectStateChanged;
         
-        Message($"Connecting to: {Address}");
+        //Message($"Connecting to: {Address}");
     }
 
     protected override void Shutdown()
@@ -61,7 +61,7 @@ public sealed class ConnectingState : State
         Message($"Error while connecting to the server. Reason: {args.Reason}" );
     }
     
-    private void Message(string message)
+    public void Message(string message)
     {
         MessageContainer.AddChild(new Label()
         {

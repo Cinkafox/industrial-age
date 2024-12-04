@@ -51,19 +51,24 @@ public sealed class EntryPoint : GameClient
 
     private void SwitchState(bool disconnected = false)
     {
-        if (!_gameController.LaunchState.FromLauncher)
+        _stateManager.RequestStateChange<ConnectingState>();
+        var state = (ConnectingState)_stateManager.CurrentState;
+        
+        if(disconnected)
         {
-            #if TOOLS
-            _baseClient.StartSinglePlayer();
+            state.Message("Disconnected..");
             return;
-            
-            #else
-            
-            _baseClient.ConnectToServer("127.0.0.1",1212);
-            #endif
-            
         }
 
-        _stateManager.RequestStateChange<ConnectingState>();
+        if (_gameController.LaunchState.FromLauncher) 
+            return;
+        
+        #if TOOLS
+                state.Message("Start singleplayer..");
+                _baseClient.StartSinglePlayer();
+        #else
+                state.Message("Connect to local server..");
+                _baseClient.ConnectToServer("127.0.0.1",1212);
+        #endif
     }
 }
