@@ -15,7 +15,7 @@
     </LayoutContainer>
     <BoxContainer
         Access="Protected"
-        Name="TopLeft"
+        Name="Top"
         Orientation="Vertical">
         <controls1:PlayerIndicator />
     </BoxContainer>

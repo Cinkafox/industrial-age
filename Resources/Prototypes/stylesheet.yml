@@ -1,0 +1,78 @@
+- type: dynamicValue
+  id: ebbeFont12
+  value:
+    valueType: Content.Game.Font.FontSpecifier
+    value:
+      font: "/Fonts/Ebbe/Ebbe Regular.ttf"
+      size: 12
+      
+- type: dynamicValue
+  id: nicePanel
+  value:
+    valueType: Robust.Client.Graphics.StyleBoxFlat
+    value:
+      backgroundColor: "#222222"
+      borderThickness: 4,4,4,4
+      borderColor: "#ffffff"
+
+- type: dynamicValue
+  id: nicePanelHover
+  value:
+    parent: nicePanel
+    value:
+      modulate: "#AAAAAA"
+
+- type: dynamicValue
+  id: nicePanelPush
+  value:
+    parent: nicePanel
+    value:
+      modulate: "#999999"
+
+- type: dynamicValue
+  id: nicePanelDisabled
+  value:
+    parent: nicePanel
+    value:
+      modulate: "#555555"
+
+- type: styleSheet
+  id: default
+  typeDefinition:
+    ContainerButton: "Robust.Client.UserInterface.Controls.ContainerButton"
+  styles:
+    "":
+      font: ebbeFont12
+      font-color: "#ffffff"
+    ProgressBar:
+      background: 
+        valueType: Robust.Client.Graphics.StyleBoxFlat
+        value:
+          backgroundColor: "#00000000"
+          borderThickness: 4,4,4,4
+          borderColor: "#ffffff"
+      foreground:
+        valueType: Robust.Client.Graphics.StyleBoxFlat
+        value:
+          backgroundColor: "#ffffff"
+          paddingLeft: 8
+          paddingRight: 8
+          paddingTop: 8
+          paddingBottom: 8
+    .windowPanel:
+      panel: nicePanel
+      header: nicePanel
+    ContainerButton.button#normal:
+      stylebox: nicePanel
+    ContainerButton.button#hover:
+      stylebox: nicePanelHover
+    ContainerButton.button#pressed:
+      stylebox: nicePanelPush
+    ContainerButton.button#disabled:
+      stylebox: nicePanelDisabled
+    .windowCloseButton:
+      texture:
+        isLazy: true
+        valueType: Robust.Client.Graphics.Texture
+        value: "/Textures/Interface/cross.svg.png"
+      modulate-self: "#FF6666"

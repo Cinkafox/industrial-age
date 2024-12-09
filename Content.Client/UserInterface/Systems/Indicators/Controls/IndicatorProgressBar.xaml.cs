@@ -7,8 +7,58 @@ namespace Content.Client.UserInterface.Systems.Indicators.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class IndicatorProgressBar : Control
 {
+    private float _size = 3f;
+
+    public float BarSize
+    {
+        get => _size;
+        set
+        {
+            _size = value;
+            Resize();
+        }
+    }
+
+    public string IndicatorName
+    {
+        get => NameLabel.Text!;
+        set => NameLabel.Text = value;
+    }
+
+    public float MaxValue
+    {
+        get => Progress.MaxValue;
+        set
+        {
+            if(Progress.MaxValue == value) 
+                return;
+            
+            Progress.MaxValue = value;
+            Resize();
+        }
+    }
+
+    public float Value
+    {
+        get => Progress.Value;
+        set => Progress.Value = value;
+    }
+
     public IndicatorProgressBar()
     {
         RobustXamlLoader.Load(this);
+        IndicatorName = "HP";
+        MaxValue = 100;
+        Value = 50;
+    }
+
+    public void UpdateData()
+    {
+        
+    }
+    
+    private void Resize()
+    {
+        Progress.MinWidth = Progress.MaxValue * _size;
     }
 }

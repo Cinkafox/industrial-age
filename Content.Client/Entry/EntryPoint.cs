@@ -1,7 +1,7 @@
 using Content.Client.Connection;
 using Content.Shared.Input;
+using Content.StyleSheetify.Client.StyleSheet;
 using Robust.Client;
-using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Client.State;
 using Robust.Client.UserInterface;
@@ -18,9 +18,14 @@ public sealed class EntryPoint : GameClient
     [Dependency] private readonly IGameController _gameController = default!;
     [Dependency] private readonly IBaseClient _baseClient = default!;
     [Dependency] private readonly IConfigurationManager _configManager = default!;
+    [Dependency] private readonly IStyleSheetManager _styleSheetManager = default!;
+
+    public bool IsSingleplayer = false;
     
     public override void PreInit()
     {
+        StyleSheetify.Client.DependencyRegistration.Register(IoCManager.Instance!);
+        IoCManager.BuildGraph();
         IoCManager.InjectDependencies(this);
         
         //AUTOSCALING default Setup!
@@ -32,17 +37,17 @@ public sealed class EntryPoint : GameClient
     }
     
     public override void PostInit()
-    {
+    { 
+        _userInterfaceManager.SetDefaultTheme("DefaultTheme"); 
+        _styleSheetManager.ApplyStyleSheet("default");
        ContentContexts.SetupContexts(_inputManager.Contexts);
-       _userInterfaceManager.SetDefaultTheme("DefaultTheme");
        _userInterfaceManager.MainViewport.Visible = false;
        
        _baseClient.RunLevelChanged += (_, args) =>
        {
            if (args.NewLevel == ClientRunLevel.Initialize)
            {
-               SwitchState(args.OldLevel == ClientRunLevel.Connected ||
-                                    args.OldLevel == ClientRunLevel.InGame);
+               SwitchState(args.OldLevel is ClientRunLevel.Connected or ClientRunLevel.InGame);
            }
        };
        
@@ -62,13 +67,16 @@ public sealed class EntryPoint : GameClient
 
         if (_gameController.LaunchState.FromLauncher) 
             return;
-        
-        #if TOOLS
-                state.Message("Start singleplayer..");
-                _baseClient.StartSinglePlayer();
-        #else
-                state.Message("Connect to local server..");
-                _baseClient.ConnectToServer("127.0.0.1",1212);
-        #endif
+
+        if (IsSingleplayer)
+        {
+            state.Message("Start singleplayer..");
+            _baseClient.StartSinglePlayer();
+        }
+        else
+        {
+            state.Message("Connect to local server..");
+            _baseClient.ConnectToServer("127.0.0.1",1212);
+        }
     }
 }

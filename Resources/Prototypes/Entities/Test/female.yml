@@ -27,3 +27,5 @@
     - type: Physics
       bodyType: KinematicController
     - type: LagCompensation
+    - type: Stamina
+    - type: PlayerIndicator

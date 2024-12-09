@@ -36,10 +36,8 @@ public static class ServerPackaging
 
     private static readonly List<string> ServerContentAssemblies = new()
     {
-        "Content.Server.Database",
         "Content.Server",
         "Content.Shared",
-        "Content.Shared.Database",
     };
 
     private static readonly List<string> ServerExtraAssemblies = new()

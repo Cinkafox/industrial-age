@@ -15,6 +15,6 @@ public sealed partial class ContentGame : UIScreen
 
         SetAnchorPreset(MainViewport, LayoutPreset.Wide);
         SetAnchorPreset(ViewportContainer, LayoutPreset.Wide);
-        SetAnchorAndMarginPreset(TopLeft, LayoutPreset.TopLeft, margin: 10);
+        SetAnchorAndMarginPreset(Top, LayoutPreset.TopLeft, margin: 10);
     }
 }

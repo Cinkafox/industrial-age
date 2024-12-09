@@ -8,6 +8,8 @@ namespace Content.Client.UserInterface.Systems.Indicators.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class PlayerIndicator : Control
 {
+    private Dictionary<string, IndicatorProgressBar> _bars = new Dictionary<string, IndicatorProgressBar>();
+    
     public PlayerIndicator()
     {
         RobustXamlLoader.Load(this);
@@ -17,5 +19,31 @@ public sealed partial class PlayerIndicator : Control
     public void SetEntity(EntityUid uid)
     {
         PlayerRect.SetEntity(uid);
+    }
+
+    public void ClearIndicators()
+    {
+        BarContainer.Children.Clear();
+        _bars.Clear();
+    }
+
+    public void ChangeValue(string name, float value, float maxValue)
+    {
+        if (!_bars.TryGetValue(name, out var indicatorProgressBar))
+        {
+            indicatorProgressBar = AddBar(name);
+        }
+
+        indicatorProgressBar.MaxValue = maxValue;
+        indicatorProgressBar.Value = value;
+    }
+
+    private IndicatorProgressBar AddBar(string name)
+    {
+        var bar = new IndicatorProgressBar();
+        bar.IndicatorName = name;
+        _bars[name] = bar;
+        BarContainer.AddChild(bar);
+        return bar;
     }
 }

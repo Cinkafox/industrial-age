@@ -6,10 +6,12 @@
         <SpriteView
             Margin="5"
             Name="PlayerRect"
-            Scale="2 2"
-            SetSize="64 64" />
-        <BoxContainer Margin="5" Orientation="Vertical">
-            <controls:IndicatorProgressBar />
-        </BoxContainer>
+            Scale="4 4"
+            SetSize="128 128" />
+        <BoxContainer
+            HorizontalExpand="True"
+            Margin="5"
+            Name="BarContainer" Access="Public"
+            Orientation="Vertical" />
     </BoxContainer>
 </controls:PlayerIndicator>
