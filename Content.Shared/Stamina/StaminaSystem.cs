@@ -1,4 +1,5 @@
 using Content.Shared.PlayerIndicator;
+using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 
 namespace Content.Shared.Stamina;
@@ -8,8 +9,6 @@ public sealed class StaminaSystem : EntitySystem
     [Dependency] private readonly PlayerIndicatorSystem _playerIndicatorSystem = default!;
     [Dependency] private readonly IGameTiming _gameTiming = default!;
     
-    public static string IndicatorName = "stamina";
-    
     public override void Initialize()
     {
         SubscribeLocalEvent<StaminaComponent,ComponentInit>(OnComponentInit);
@@ -18,12 +17,13 @@ public sealed class StaminaSystem : EntitySystem
 
     private void OnComponentRemove(Entity<StaminaComponent> ent, ref ComponentRemove args)
     {
-        _playerIndicatorSystem.RemoveIndicator(ent.Owner, IndicatorName);
+        _playerIndicatorSystem.Remove(ent.Owner, StaminaIndicator.State);
     }
 
     private void OnComponentInit(Entity<StaminaComponent> ent, ref ComponentInit args)
     {
-        _playerIndicatorSystem.AddIndicator(ent.Owner, IndicatorName, ent.Comp.MaxStamina);
+        _playerIndicatorSystem.Add(ent.Owner, StaminaIndicator.State, ent.Comp.MaxStamina);
+        ChangeStamina(ent.Owner, ent.Comp.Stamina);
     }
 
     public void ChangeStamina(Entity<StaminaComponent?> entity, float value)
@@ -32,7 +32,8 @@ public sealed class StaminaSystem : EntitySystem
             return;
         
         entity.Comp.Stamina = float.Clamp(entity.Comp.Stamina + value, 0f, entity.Comp.MaxStamina);
-        _playerIndicatorSystem.ChangeValue(entity.Owner, IndicatorName, entity.Comp.Stamina);
+        
+        _playerIndicatorSystem.Set(entity.Owner, StaminaIndicator.State, entity.Comp.Stamina);
     }
 
     public bool UseStamina(Entity<StaminaComponent?> entity, float cost)
@@ -43,7 +44,8 @@ public sealed class StaminaSystem : EntitySystem
         var staminaAfter = entity.Comp.Stamina - cost;
         entity.Comp.Stamina = float.Max(staminaAfter, 0);
         entity.Comp.NextRegenerate = _gameTiming.CurTime + entity.Comp.RegenerateDelay;
-        _playerIndicatorSystem.ChangeValue(entity.Owner, IndicatorName, entity.Comp.Stamina);
+        
+        _playerIndicatorSystem.Set(entity.Owner, StaminaIndicator.State, entity.Comp.Stamina);
         return staminaAfter > 0;
     }
     
@@ -63,4 +65,10 @@ public sealed class StaminaSystem : EntitySystem
             }
         }
     }
+}
+
+[Serializable, NetSerializable]
+public enum StaminaIndicator : byte
+{
+    State,
 }

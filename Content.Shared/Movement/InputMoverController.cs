@@ -4,6 +4,7 @@ using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Controllers;
+using Robust.Shared.Timing;
 
 namespace Content.Shared.Movement;
 
@@ -56,15 +57,22 @@ public sealed class InputMoverController : VirtualController
     {
         base.UpdateBeforeSolve(prediction, frameTime);
         
-        if(prediction) return;
+        if (!IoCManager.Resolve<IGameTiming>().IsFirstTimePredicted) return;
         
-        var query = EntityQueryEnumerator<InputMoverComponent,TransformComponent, PhysicsComponent>();
+        var query = EntityQueryEnumerator<InputMoverComponent, TransformComponent, PhysicsComponent>();
 
         while (query.MoveNext(out var uid, out var inputMoverComponent, out var transformComponent, out var physicsComponent))
         {
-            var speedImpl = inputMoverComponent.IsRunning && _staminaSystem.UseStamina(uid, inputMoverComponent.StaminaCost * frameTime) ? 1.5f : 1f;
-            if (inputMoverComponent.Magnitude != 0 && !_staminaSystem.UseStamina(uid, 0)) speedImpl = 0.25f; 
-            
+            var speedImpl = 1f;
+            if (inputMoverComponent.Magnitude != 0)
+            {
+                if (inputMoverComponent.IsRunning &&
+                    _staminaSystem.UseStamina(uid, inputMoverComponent.StaminaCost * frameTime))
+                    speedImpl = 1.5f;
+                if (!_staminaSystem.UseStamina(uid, 0))
+                    speedImpl = 0.25f;
+            }
+
             var delta = (transformComponent.LocalRotation - inputMoverComponent.Direction).Normalise();
 
             var currSpeed = inputMoverComponent.Magnitude * 4f * speedImpl;

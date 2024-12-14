@@ -3,13 +3,14 @@ using Robust.Shared.Timing;
 
 namespace Content.Shared.Movement;
 
-[RegisterComponent, NetworkedComponent]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class InputMoverComponent : Component
 {
-    [ViewVariables] public Angle Direction = Angle.Zero;
-    [ViewVariables] public int PushedButtonCount = 0;
-    [ViewVariables] public float Magnitude = 0f;
-    [ViewVariables] public bool IsRunning = false;
-    [ViewVariables] public float StaminaCost = 10f;
-    [ViewVariables] public float Speed = 0f;
+    //TODO: Отделить говно от основных приколов
+    [ViewVariables, AutoNetworkedField] public Angle Direction = Angle.Zero;
+    [ViewVariables, AutoNetworkedField] public int PushedButtonCount = 0;
+    [ViewVariables, AutoNetworkedField] public float Magnitude = 0f;
+    [ViewVariables, AutoNetworkedField] public bool IsRunning = false;
+    [ViewVariables, AutoNetworkedField] public float StaminaCost = 10f;
+    [ViewVariables, AutoNetworkedField] public float Speed = 0f;
 }

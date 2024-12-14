@@ -1,56 +1,37 @@
-using System.Linq;
-using Robust.Shared.GameStates;
+using Robust.Shared.Timing;
 
 namespace Content.Shared.PlayerIndicator;
 
 public sealed class PlayerIndicatorSystem : EntitySystem
 {
-    public override void Initialize()
+    [Dependency] private readonly SharedAppearanceSystem _appearanceSystem = default!;
+    [Dependency] private readonly IGameTiming _gameTiming = default!;
+    
+    public void Remove(Entity<PlayerIndicatorComponent?> entity, Enum indicator)
     {
-        SubscribeLocalEvent<PlayerIndicatorComponent, ComponentGetState>(OnGetState);
+        _appearanceSystem.RemoveData(entity, indicator);
+        
+        if(!Resolve(entity, ref entity.Comp)) return;
+        
+        entity.Comp.Indicators.Remove(indicator);
     }
 
-    private void OnGetState(EntityUid uid, PlayerIndicatorComponent component, ref ComponentGetState args)
+    public void Add(Entity<PlayerIndicatorComponent?> entity, Enum indicator, float max)
     {
-        args.State = new PlayerIndicatorComponentState
-        {
-            Values = component.Values,
-        };
+        Set(entity, indicator, max);
     }
     
-    public void AddIndicator(Entity<PlayerIndicatorComponent?> entity, string name, float maxValue)
+    public void Set(Entity<PlayerIndicatorComponent?> entity, Enum indicator, float value)
     {
-        if (!Resolve(entity, ref entity.Comp) || 
-            !entity.Comp.Values.TryAdd(name, new IndicatorBar())) return;
-
-        entity.Comp.Values[name].MaxValue = maxValue;
+        if(!_gameTiming.IsFirstTimePredicted) return;
         
-        Dirty(entity.Owner, entity.Comp);
-    }
-
-    public void RemoveIndicator(Entity<PlayerIndicatorComponent?> entity, string name)
-    {
-        if (!Resolve(entity, ref entity.Comp)) return;
+        _appearanceSystem.SetData(entity, indicator, value);
         
-        entity.Comp.Values.Remove(name);
+        if(!Resolve(entity, ref entity.Comp)) return;
         
-        Dirty(entity.Owner, entity.Comp);
-    }
-
-    public void ChangeValue(Entity<PlayerIndicatorComponent?> entity, string name, float value)
-    {
-        if (!Resolve(entity, ref entity.Comp)) return;
-        
-        if(!entity.Comp.Values.TryGetValue(name, out _)) 
-            AddIndicator(entity, name, value);
-
-        if (entity.Comp.Values[name].Value == value) 
-            return;
-        
-        if(entity.Comp.Values[name].MaxValue < value ) 
-            entity.Comp.Values[name].MaxValue = value;
-
-        entity.Comp.Values[name].Value = value;
-        Dirty(entity.Owner, entity.Comp);
+        if (!entity.Comp.Indicators.Contains(indicator))
+        {
+            entity.Comp.Indicators.Add(indicator);
+        }
     }
 }

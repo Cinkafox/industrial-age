@@ -1,5 +1,6 @@
 using Content.Client.UserInterface.Systems.Indicators.Controls;
 using Content.Shared.PlayerIndicator;
+using Robust.Client.GameObjects;
 using Robust.Client.UserInterface.Controllers;
 using Robust.Shared.Player;
 using Robust.Shared.Timing;
@@ -8,13 +9,15 @@ namespace Content.Client.UserInterface.Systems.Indicators;
 
 public sealed class IndicatorUIController : UIController
 {
-    public Controls.PlayerIndicator? Indicator;
+    private AppearanceSystem _appearanceSystem = default!;
+    
+    public PlayerIndicator? Indicator;
     
     private EntityUid Player = EntityUid.Invalid;
     
     public override void Initialize()
     {
-        base.Initialize();
+        IoCManager.InjectDependencies(this);
         
         SubscribeLocalEvent<LocalPlayerAttachedEvent>(OnAttach);
         SubscribeLocalEvent<LocalPlayerDetachedEvent>(OnDeatach);
@@ -33,6 +36,7 @@ public sealed class IndicatorUIController : UIController
     {
         if (Indicator == null) return;
         if (!EntityManager.TryGetComponent<PlayerIndicatorComponent>(ev.Entity, out var _)) return;
+        _appearanceSystem = EntityManager.System<AppearanceSystem>();
         
         Indicator.Visible = true;
         Player = ev.Entity;
@@ -50,16 +54,15 @@ public sealed class IndicatorUIController : UIController
         
         if (!EntityManager.TryGetComponent<PlayerIndicatorComponent>(Player, out var playerIndicatorComponent)) return;
 
-        
-    }
-
-    public void UpdateData(Dictionary<string, IndicatorBar> values)
-    {
-        if (Indicator == null) return;
-        
-        foreach (var (name, indicatorBar) in values)
+        foreach (var indicator in playerIndicatorComponent.Indicators)
         {
-            Indicator.ChangeValue(name, indicatorBar.Value, indicatorBar.MaxValue);
+            if (!_appearanceSystem.TryGetData<float>(Player, indicator, out var value))
+            {
+                Logger.Error("NO DATA " + indicator);
+                continue;
+            }
+            
+            Indicator.ChangeValue(Loc.GetString($"indicator-{indicator.ToString()}"), value);
         }
     }
 }

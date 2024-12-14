@@ -29,3 +29,4 @@
     - type: LagCompensation
     - type: Stamina
     - type: PlayerIndicator
+    - type: Appearance

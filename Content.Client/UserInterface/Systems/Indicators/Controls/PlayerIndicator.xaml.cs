@@ -27,14 +27,16 @@ public sealed partial class PlayerIndicator : Control
         _bars.Clear();
     }
 
-    public void ChangeValue(string name, float value, float maxValue)
+    public void ChangeValue(string name, float value)
     {
         if (!_bars.TryGetValue(name, out var indicatorProgressBar))
         {
             indicatorProgressBar = AddBar(name);
         }
 
-        indicatorProgressBar.MaxValue = maxValue;
+        if (value > indicatorProgressBar.MaxValue)
+            indicatorProgressBar.MaxValue = value;
+        
         indicatorProgressBar.Value = value;
     }
 

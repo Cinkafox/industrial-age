@@ -1,24 +1,11 @@
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Generic;
 
 namespace Content.Shared.PlayerIndicator;
 
-[RegisterComponent, NetworkedComponent]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class PlayerIndicatorComponent : Component
 {
-    [DataField] public Dictionary<string, IndicatorBar> Values = new();
-}
-
-[DataDefinition]
-[Serializable, NetSerializable]
-public sealed partial class IndicatorBar
-{
-    [DataField] public float Value;
-    [DataField] public float MaxValue;
-}
-
-[Serializable, NetSerializable]
-public sealed class PlayerIndicatorComponentState : IComponentState
-{
-    public Dictionary<string, IndicatorBar> Values = default!;
+    [DataField, AutoNetworkedField] public List<Enum> Indicators = new();
 }
