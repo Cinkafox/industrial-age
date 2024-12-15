@@ -69,6 +69,7 @@ public sealed class ContentGroupController : IConGroupControllerImplementation
 
     public bool CanAdminPlace(ICommonSession session)
     {
+        Logger.Debug(session.Name + " " + AdminName);
         return session.Name == AdminName;
     }
 

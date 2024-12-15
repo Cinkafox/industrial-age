@@ -7,6 +7,7 @@ using Robust.Client.State;
 using Robust.Client.UserInterface;
 using Robust.Shared.Configuration;
 using Robust.Shared.ContentPack;
+using Robust.Shared.Prototypes;
 
 namespace Content.Client.Entry;
 
@@ -19,6 +20,7 @@ public sealed class EntryPoint : GameClient
     [Dependency] private readonly IBaseClient _baseClient = default!;
     [Dependency] private readonly IConfigurationManager _configManager = default!;
     [Dependency] private readonly IStyleSheetManager _styleSheetManager = default!;
+    [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
 
     public bool IsSingleplayer = false;
     
@@ -51,7 +53,14 @@ public sealed class EntryPoint : GameClient
            }
        };
        
+       _prototypeManager.PrototypesReloaded += PrototypeReload;
+       
        SwitchState();
+    }
+
+    private void PrototypeReload(PrototypesReloadedEventArgs obj)
+    {
+        _styleSheetManager.Reload();
     }
 
     private void SwitchState(bool disconnected = false)

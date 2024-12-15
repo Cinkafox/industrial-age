@@ -236,6 +236,9 @@ binds:
   - function: OpenEntitySpawnWindow
     type: State
     key: F5
+  - function: OpenTileSpawnWindow
+    type: State
+    key: F6
   - function: OpenDecalSpawnWindow
     type: State
     key: F8
@@ -260,3 +263,26 @@ binds:
     type: State
     key: Escape
     mod1: Shift
+  - function: EditorGridPlace
+    type: State
+    key: MouseLeft
+    canFocus: true
+    mod1: Control
+  - function: EditorPlaceObject
+    type: State
+    key: MouseLeft
+    canFocus: true
+  - function: EditorCancelPlace
+    type: State
+    key: MouseRight
+    canFocus: true
+  - function: EditorRotateObject
+    type: State
+    key: MouseMiddle
+  - function: EditorFlipObject
+    type: State
+    key: MouseMiddle
+    mod1: Control
+  - function: EditorCopyObject
+    type: State
+    key: P

@@ -3,15 +3,18 @@ using Content.Server.GameTicking;
 using Robust.Server.ServerStatus;
 using Robust.Shared.ContentPack;
 using Robust.Shared.IoC;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server.Entry;
 
 public sealed class EntryPoint : GameServer
 {
+    
     public override void PreInit()
     {
         IoCManager.BuildGraph();
         IoCManager.InjectDependencies(this);
+        //IoCManager.Resolve<IPrototypeManager>().RegisterIgnore("dynamicValue");
     }
 
     public override void Init()

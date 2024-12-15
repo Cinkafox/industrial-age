@@ -58,7 +58,18 @@ public abstract partial class SharedGameTicker : EntitySystem
             }
         }
         
-        Spawn("EntFemale", new EntityCoordinates(GridUid, Vector2.One));
-        MapSystem.SetAmbientLight(mapId, Color.FromHex("#ffffff"));
+        Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(2,2)));
+        Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(3,2)));
+        Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(1,2)));
+        
+        SpawnRotate(Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(2,-2))),Angle.FromDegrees(180));
+        SpawnRotate(Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(3,-2))),Angle.FromDegrees(180));
+        SpawnRotate(Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(1,-2))),Angle.FromDegrees(180));
+    }
+
+    public void SpawnRotate(EntityUid uid, Angle angle)
+    {
+        var transform = Transform(uid);
+        transform.LocalRotation = angle;
     }
 }

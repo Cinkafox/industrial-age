@@ -39,8 +39,8 @@ public sealed class CCVars : CVars
         CVarDef.Create("viewport.vertical_fit", true, CVar.CLIENTONLY | CVar.ARCHIVE);
     
     /*
-     * 
+     * STACKSPRITING
      */
     
-    public static readonly CVarDef<string> StackByOneLayer = CVarDef.Create("stacksprite.layer_count", "ss14://localhost:1212", CVar.CLIENT);
+    public static readonly CVarDef<int> StackByOneLayer = CVarDef.Create("stacksprite.layer_count", 2, CVar.CLIENT);
 }
