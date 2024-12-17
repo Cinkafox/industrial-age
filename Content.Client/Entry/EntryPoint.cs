@@ -40,8 +40,9 @@ public sealed class EntryPoint : GameClient
     
     public override void PostInit()
     { 
-        _userInterfaceManager.SetDefaultTheme("DefaultTheme"); 
-        _styleSheetManager.ApplyStyleSheet("default");
+       _userInterfaceManager.SetDefaultTheme("DefaultTheme"); 
+       _styleSheetManager.ApplyStyleSheet("default");
+       
        ContentContexts.SetupContexts(_inputManager.Contexts);
        _userInterfaceManager.MainViewport.Visible = false;
        
@@ -60,7 +61,7 @@ public sealed class EntryPoint : GameClient
 
     private void PrototypeReload(PrototypesReloadedEventArgs obj)
     {
-        _styleSheetManager.Reload();
+        _styleSheetManager.ApplyStyleSheet("default");
     }
 
     private void SwitchState(bool disconnected = false)
@@ -84,8 +85,7 @@ public sealed class EntryPoint : GameClient
         }
         else
         {
-            state.Message("Connect to local server..");
-            _baseClient.ConnectToServer("127.0.0.1",1212);
+            state.ConnectToLocal();
         }
     }
 }

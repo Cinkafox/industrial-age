@@ -42,7 +42,15 @@ public sealed class InputMoverController : VirtualController
             inputMoverComponent.PushedButtonCount -= 1;
         }
 
-        inputMoverComponent.Magnitude = inputMoverComponent.PushedButtonCount > 0 ? 1f : 0f;
+        var curr = inputMoverComponent.PushedButtonCount > 0 ? 1f : 0f;
+        
+        RaiseLocalEvent(sessionAttachedEntity, new MoveInputEvent()
+        {
+            OldMagnitude = inputMoverComponent.Magnitude, CurrentMagnitude = curr
+        });
+        
+
+        inputMoverComponent.Magnitude = curr;
     }
 
     public void HandleRunChange(EntityUid sessionAttachedEntity, ushort messageSubTick, bool isRunning)
@@ -97,4 +105,10 @@ public static class AngleExt
             angle += 2 * MathF.PI;
         return angle;
     }
+}
+
+public sealed class MoveInputEvent : EntityEventArgs
+{
+    public float OldMagnitude;
+    public float CurrentMagnitude;
 }

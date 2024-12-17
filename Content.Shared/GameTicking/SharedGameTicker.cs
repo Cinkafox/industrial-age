@@ -54,7 +54,7 @@ public abstract partial class SharedGameTicker : EntitySystem
                 var sx = x - width / 2;
                 var sy= y - height / 2;
                 
-                MapSystem.SetTile(GridUid, new Vector2i(sx,sy),new Robust.Shared.Map.Tile(1));
+                MapSystem.SetTile(GridUid, new Vector2i(sx,sy),new Robust.Shared.Map.Tile(2));
             }
         }
         

@@ -137,10 +137,10 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         p3 += center;
         p4 += center;
 
-        p1 = Transform(p1,Zlevel);
-        p2 = Transform(p2,Zlevel);
-        p3 = Transform(p3,Zlevel);
-        p4 = Transform(p4,Zlevel);
+        p1 = Transform(p1,center,Zlevel);
+        p2 = Transform(p2,center,Zlevel);
+        p3 = Transform(p3,center,Zlevel);
+        p4 = Transform(p4,center,Zlevel);
         
         if(!_bounds.Contains(p1) && 
            !_bounds.Contains(p2) && 
@@ -202,10 +202,40 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         }
     }
 
-    private Vector2 Transform(Vector2 p1, float Zlevel)
+    private Vector2 Transform(Vector2 p1, Vector2 center, float Zlevel)
     {
         var delta = p1 - _currentEye.Position.Position;
-        return new Vector2(p1.X, p1.Y) + delta*0.01f* Zlevel+Zlevel*new Vector2(0,0.0f);
+        var centDelta = p1 - center;
+        var skewed = ApplyPerspectiveTransform(p1, center, 0f, 0f);
+        return skewed + delta * 0.005f * Zlevel +Zlevel*new Vector2(0,0.024f);
+    }
+    
+    static Vector2 ApplySkewWithCenter(Vector2 vector, Vector2 center, float skewX, float skewY)
+    {
+        // Step 1: Translate vector to make the center the origin
+        Vector2 translated = vector - center;
+
+        // Step 2: Apply skew transformation
+        float x = translated.X + skewX * translated.Y;
+        float y = translated.Y + skewY * translated.X;
+        Vector2 skewed = new Vector2(x, y);
+
+        // Step 3: Translate vector back to its original position
+        return skewed + center;
+    }
+    
+    static Vector2 ApplyPerspectiveTransform(Vector2 vector, Vector2 center, float perspectiveX, float perspectiveY)
+    {
+        // Step 1: Translate vector to make the center the origin
+        Vector2 translated = vector - center;
+
+        // Step 2: Apply perspective transformation
+        float w = 1 + perspectiveX * translated.X + perspectiveY * translated.Y;
+        float x = translated.X / w;
+        float y = translated.Y / w;
+
+        // Step 3: Translate back to the original coordinate system
+        return new Vector2(x, y) + center;
     }
 
     public void Dispose()

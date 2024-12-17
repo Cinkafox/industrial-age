@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Robust.Client;
 using Robust.Client.State;
 using Robust.Client.UserInterface;
@@ -35,8 +36,6 @@ public sealed class ConnectingState : State
         
         _clientNetManager.ConnectFailed += OnConnectFailed;
         _clientNetManager.ClientConnectStateChanged += OnConnectStateChanged;
-        
-        //Message($"Connecting to: {Address}");
     }
 
     protected override void Shutdown()
@@ -49,7 +48,23 @@ public sealed class ConnectingState : State
     
     private void OnConnectStateChanged(ClientConnectionState state)
     {
-        Message(state.ToString());
+        switch (state)
+        {
+            case ClientConnectionState.NotConnecting:
+                break;
+            case ClientConnectionState.ResolvingHost:
+                break;
+            case ClientConnectionState.EstablishingConnection:
+                break;
+            case ClientConnectionState.Handshake:
+                break;
+            case ClientConnectionState.Connected:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+        }
+        
+        Message(Loc.GetString(state.ToString()));
     }
 
     private void OnConnectFailed(object? sender, NetConnectFailArgs args)
@@ -89,5 +104,18 @@ public sealed class ConnectingState : State
             Message($"Redial exception: {ex}");
         }
         return false;
+    }
+
+    public void ConnectToLocal()
+    {
+        try
+        {
+            Message("Connect to local server..");
+            _baseClient.ConnectToServer("127.0.0.1",1212);
+        }
+        catch (Exception e)
+        {
+            OnConnectFailed(this, new NetConnectFailArgs(e.Message));
+        }
     }
 }

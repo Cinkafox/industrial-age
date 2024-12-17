@@ -30,3 +30,44 @@
     - type: Stamina
     - type: PlayerIndicator
     - type: Appearance
+
+- type: entity
+  name: Male
+  id: EntMale
+  description: Test think
+  components:
+    - type: Sprite
+      sprite: Entities/Test/male.rsi
+      layers:
+        - map: ["movement"]
+          state: stand
+      noRot: true
+    - type: SpriteMovement
+      movementLayers:
+        movement:
+          state: run
+      noMovementLayers:
+        movement:
+          state: stand
+    - type: Eye
+      zoom: 0.5,0.5
+    - type: Fixtures
+      fixtures:
+        fix1:
+          shape:
+            !type:PhysShapeCircle
+            radius: 0.35
+          density: 50
+          mask:
+            - MobMask
+          layer:
+            - MobLayer
+    - type: Input
+      context: "human"
+    - type: InputMover
+    - type: Physics
+      bodyType: KinematicController
+    - type: LagCompensation
+    - type: Stamina
+    - type: PlayerIndicator
+    - type: Appearance
