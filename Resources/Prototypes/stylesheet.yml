@@ -11,7 +11,7 @@
   value:
     valueType: Robust.Client.Graphics.StyleBoxFlat
     value:
-      backgroundColor: "#222222"
+      backgroundColor: "#232323"
       borderThickness: 4,4,4,4
       borderColor: "#ffffff"
 
