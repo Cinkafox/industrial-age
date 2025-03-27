@@ -72,11 +72,12 @@ public sealed class EntryPoint : GameShared
     }
 }
 
-public sealed class VoidTile : ITileDefinition
+[Prototype("VoidTile")]
+public sealed class VoidTile : ITileDefinition, IPrototype
 {
     public ushort TileId { get; set; }
     public string Name { get; } = "Void";
-    public string ID { get; } = "Void";
+    [IdDataField] public string ID { get; } = "Void";
     public ResPath? Sprite { get; }
     public Dictionary<Direction, ResPath> EdgeSprites { get; } = new();
     public int EdgeSpritePriority { get; }

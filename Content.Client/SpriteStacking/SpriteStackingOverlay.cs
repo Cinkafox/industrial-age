@@ -7,9 +7,12 @@ using Robust.Shared.Configuration;
 using Robust.Shared.Enums;
 using Robust.Shared.Graphics;
 using Robust.Shared.Profiling;
+using Vector3 = System.Numerics.Vector3;
 
 namespace Content.Client.SpriteStacking;
 
+
+public record struct StackData(Vector2 Position, Angle Rotation, Texture Texture, UIBox2 TextureRect);
 public sealed class SpriteStackingOverlay : Overlay
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
@@ -22,9 +25,11 @@ public sealed class SpriteStackingOverlay : Overlay
     private readonly SpriteSystem _spriteSystem;
     
     private int _stackByOneLayer = 1;
-    private SpriteStackingAccumulator _accumulator = new();
+    public static readonly SpriteStackingAccumulator Accumulator = new();
     
     public override OverlaySpace Space => OverlaySpace.WorldSpaceBelowFOV;
+
+    private SortedDictionary<int, HashSet<StackData>> _layers = new();
 
     public SpriteStackingOverlay()
     {
@@ -41,13 +46,15 @@ public sealed class SpriteStackingOverlay : Overlay
 
     protected override void Draw(in OverlayDrawArgs args)
     {
+        _layers.Clear();
+        
         var eye = _eyeManager.CurrentEye;
         var bounds = args.WorldAABB.Enlarged(5f);
         var query = _entityManager.EntityQueryEnumerator<SpriteStackingComponent, TransformComponent>();
 
         using var draw = _profManager.Group("SpriteStackDraw");
         
-        using var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, _profManager, _accumulator);
+        using var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, _profManager, Accumulator);
         
         while (query.MoveNext(out var uid, out var stackSpriteComponent, out var transformComponent))
         {
@@ -68,27 +75,34 @@ public sealed class SpriteStackingOverlay : Overlay
 
                 var sr = UIBox2.FromDimensions(new Vector2(xIndex * size.X, yIndex * size.Y), size);
                 
-                for (var z = 0; z < _stackByOneLayer; z++)
+                if(!_layers.TryGetValue(i, out var list))
                 {
-                    var zLevelLayer = i + z / (float)_stackByOneLayer;
-                    
-                    handle.DrawLayer(drawPos, zLevelLayer, transformComponent.WorldRotation, texture, sr);
+                    list = new System.Collections.Generic.HashSet<StackData>();
+                    _layers.Add(i, list);
+                }
+                
+                list.Add(new StackData(drawPos, transformComponent.WorldRotation, texture, sr));
+            }
+        }
+
+        foreach ((var Z, var stackData) in _layers)
+        {
+            foreach (var stack in stackData)
+            {
+                for (int i = 0; i < _stackByOneLayer; i++)
+                {
+                    var realZ = Z + i / (float)_stackByOneLayer;
+                    handle.DrawLayer(stack.Position, realZ, stack.Rotation, stack.Texture, stack.TextureRect);
                 }
             }
-            
-            handle.Flush();
         }
     }
 }
 
 public sealed class SpriteStackingAccumulator
 {
-    public SortedDictionary<float, HashSet<VertexStackin>> VertexQueue = new();
-    public List<Vector2> VertexPool = new();
     public DrawVertexUV2D[] UvVertexes = new DrawVertexUV2D[6]; 
 }
-
-public sealed record VertexStackin(Texture Texture, int vertId, UIBox2 sr);
 
 public sealed class DrawingHandleSpriteStacking : IDisposable
 {
@@ -108,9 +122,11 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         _accumulator = accumulator;
     }
 
-    public void DrawLayer(Vector2 position, float Zlevel, Angle rotation, Texture texture, UIBox2 sr)
+    public void DrawLayer(Vector2 position, float Zlevel, Angle rotation, Texture texture, UIBox2? textureRegion = null, Vector2? scale = null)
     {
-        var currScale = sr.Size / (float)EyeManager.PixelsPerMeter;
+        var sr = textureRegion ?? UIBox2.FromDimensions(Vector2.Zero, texture.Size);
+        
+        var currScale = scale ?? sr.Size / EyeManager.PixelsPerMeter;
         
         var p1 = position; //LeftTop
         var p3 = position + currScale; //RightBottom
@@ -147,100 +163,47 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
            !_bounds.Contains(p3) && 
            !_bounds.Contains(p4)) 
             return;
-        
-        using var preparing = _profManager.Group("SpriteStackingPrepareLayer");
-        
-        var vertexId = _accumulator.VertexPool.Count;
-        
-        _accumulator.VertexPool.Add(p1);
-        _accumulator.VertexPool.Add(p2);
-        _accumulator.VertexPool.Add(p3);
-        _accumulator.VertexPool.Add(p4);
-
-        if (!_accumulator.VertexQueue.TryGetValue(Zlevel, out var vertexArra))
-        {
-            vertexArra = new HashSet<VertexStackin>();
-            _accumulator.VertexQueue.Add(Zlevel, vertexArra);
-        }
-
-        vertexArra.Add(new VertexStackin(texture, vertexId, sr));
-    }
-
-    public void Flush()
-    {
-        using var flush = _profManager.Group("SpriteStackingFlush");
-
-        foreach (var (_, vertexHeight) in _accumulator.VertexQueue)
-        {
-            foreach (var vertexStackin in vertexHeight)
-            {
-                var texture = vertexStackin.Texture;
-                var sr = vertexStackin.sr;
                 
-                var hw = texture.Size;
+        var hw = texture.Size;
             
-                var t1 = sr.TopLeft / hw;
-                var t2 = sr.BottomLeft / hw;
-                var t3 = sr.BottomRight / hw;
-                var t4 = sr.TopRight / hw;
+        var t1 = sr.TopLeft / hw;
+        var t2 = sr.BottomLeft / hw;
+        var t3 = sr.BottomRight / hw;
+        var t4 = sr.TopRight / hw;
             
-                var p1 = _accumulator.VertexPool[vertexStackin.vertId];
-                var p2 = _accumulator.VertexPool[vertexStackin.vertId + 1];
-                var p3 = _accumulator.VertexPool[vertexStackin.vertId + 2];
-                var p4 = _accumulator.VertexPool[vertexStackin.vertId + 3];
+        _accumulator.UvVertexes[0] = new DrawVertexUV2D(p1, t1);
+        _accumulator.UvVertexes[1] = new DrawVertexUV2D(p2, t2);
+        _accumulator.UvVertexes[2] = new DrawVertexUV2D(p3, t3);
             
-                _accumulator.UvVertexes[0] = new DrawVertexUV2D(p1, t1);
-                _accumulator.UvVertexes[1] = new DrawVertexUV2D(p2, t2);
-                _accumulator.UvVertexes[2] = new DrawVertexUV2D(p3, t3);
-            
-                _accumulator.UvVertexes[3] = new DrawVertexUV2D(p1, t1);
-                _accumulator.UvVertexes[4] = new DrawVertexUV2D(p3, t3);
-                _accumulator.UvVertexes[5] = new DrawVertexUV2D(p4, t4);
-            
-                _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList,texture,_accumulator.UvVertexes); 
-            }
-        }
+        _accumulator.UvVertexes[3] = new DrawVertexUV2D(p1, t1);
+        _accumulator.UvVertexes[4] = new DrawVertexUV2D(p3, t3);
+        _accumulator.UvVertexes[5] = new DrawVertexUV2D(p4, t4);
+        
+        _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList,texture,_accumulator.UvVertexes); 
     }
 
     private Vector2 Transform(Vector2 p1, Vector2 center, float Zlevel)
     {
-        var delta = p1 - _currentEye.Position.Position;
-        var centDelta = p1 - center;
-        var skewed = ApplyPerspectiveTransform(p1, center, 0f, 0f);
-        return skewed + delta * 0.005f * Zlevel +Zlevel*new Vector2(0,0.024f);
+        return ApplyPerspectiveTransform(p1,Zlevel,
+            _currentEye.Position.Position + _currentEye.Scale / 2,
+            0f,
+            0.025f);
     }
     
-    static Vector2 ApplySkewWithCenter(Vector2 vector, Vector2 center, float skewX, float skewY)
+    static Vector2 ApplyPerspectiveTransform(Vector2 vector,float ZLevel, Vector2 center, float perspectiveX, float perspectiveY)
     {
-        // Step 1: Translate vector to make the center the origin
         Vector2 translated = vector - center;
-
-        // Step 2: Apply skew transformation
-        float x = translated.X + skewX * translated.Y;
-        float y = translated.Y + skewY * translated.X;
-        Vector2 skewed = new Vector2(x, y);
-
-        // Step 3: Translate vector back to its original position
-        return skewed + center;
-    }
-    
-    static Vector2 ApplyPerspectiveTransform(Vector2 vector, Vector2 center, float perspectiveX, float perspectiveY)
-    {
-        // Step 1: Translate vector to make the center the origin
-        Vector2 translated = vector - center;
-
-        // Step 2: Apply perspective transformation
+        
         float w = 1 + perspectiveX * translated.X + perspectiveY * translated.Y;
         float x = translated.X / w;
         float y = translated.Y / w;
-
-        // Step 3: Translate back to the original coordinate system
-        return new Vector2(x, y) + center;
+        float z = ZLevel / w;
+        
+        return new Vector2(x, y * 0.55f + z*0.032f) + center;
     }
 
     public void Dispose()
     {
-        _accumulator.VertexPool.Clear();
-        _accumulator.VertexQueue.Clear();
+      
     }
 }

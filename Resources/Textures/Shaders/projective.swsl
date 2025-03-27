@@ -1,0 +1,11 @@
+uniform sampler2D SCREEN_TEXTURE;
+
+void fragment() {
+    highp vec2 coord = FRAGCOORD.xy * SCREEN_PIXEL_SIZE.xy;
+    
+    coord = coord * vec2(1,1.5) - vec2(coord.x,0);
+    
+    highp float c = min(0,(coord.y-0.9)*10);
+    
+    COLOR = zTextureSpec(SCREEN_TEXTURE, coord);
+}

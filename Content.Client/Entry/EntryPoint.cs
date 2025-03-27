@@ -19,14 +19,13 @@ public sealed class EntryPoint : GameClient
     [Dependency] private readonly IGameController _gameController = default!;
     [Dependency] private readonly IBaseClient _baseClient = default!;
     [Dependency] private readonly IConfigurationManager _configManager = default!;
-    [Dependency] private readonly IStyleSheetManager _styleSheetManager = default!;
+    [Dependency] private readonly IContentStyleSheetManager _styleSheetManager = default!;
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
 
     public bool IsSingleplayer = false;
     
     public override void PreInit()
     {
-        StyleSheetify.Client.DependencyRegistration.Register(IoCManager.Instance!);
         IoCManager.BuildGraph();
         IoCManager.InjectDependencies(this);
         

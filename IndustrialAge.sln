@@ -86,6 +86,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Content.StyleSheetify.Clien
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Style", "Style", "{1C14E0EF-52A1-42E8-B3A8-839D5324E998}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Content.StyleSheetify.Server", "StyleSheetify\Content.StyleSheetify.Server\Content.StyleSheetify.Server.csproj", "{A3EEDAFC-A1FC-481C-A9AD-49FE7180211A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -291,6 +293,12 @@ Global
 		{2D36E3D6-DD92-4002-8BA0-9ADC2A65855E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2D36E3D6-DD92-4002-8BA0-9ADC2A65855E}.Tools|Any CPU.ActiveCfg = Debug|Any CPU
 		{2D36E3D6-DD92-4002-8BA0-9ADC2A65855E}.Tools|Any CPU.Build.0 = Debug|Any CPU
+		{A3EEDAFC-A1FC-481C-A9AD-49FE7180211A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3EEDAFC-A1FC-481C-A9AD-49FE7180211A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3EEDAFC-A1FC-481C-A9AD-49FE7180211A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3EEDAFC-A1FC-481C-A9AD-49FE7180211A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3EEDAFC-A1FC-481C-A9AD-49FE7180211A}.Tools|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3EEDAFC-A1FC-481C-A9AD-49FE7180211A}.Tools|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{60096688-1F79-40DB-8545-F48E748C35F7} = {E7DD9404-BA62-42E9-985E-1BD4E3B3B47B}

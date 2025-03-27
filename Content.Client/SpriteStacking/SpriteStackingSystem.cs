@@ -1,6 +1,7 @@
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
+using Robust.Shared.Utility;
 
 namespace Content.Client.SpriteStacking;
 
@@ -15,12 +16,21 @@ public sealed class SpriteStackingSystem : EntitySystem
     public override void Initialize()
     {
         _overlayManager.AddOverlay(new SpriteStackingOverlay());
+        _overlayManager.AddOverlay(new TileTransformOverlay());
         SubscribeLocalEvent<SpriteStackingComponent, ComponentInit>(OnInit);
+        SubscribeLocalEvent<SpriteStackingComponent, ComponentShutdown>(OnShutdown);
+    }
+
+    private void OnShutdown(Entity<SpriteStackingComponent> ent, ref ComponentShutdown args)
+    {
+        if (!TryComp<SpriteComponent>(ent, out var spriteComponent))
+            return;
+        spriteComponent.Visible = true;
     }
 
     private void OnInit(Entity<SpriteStackingComponent> ent, ref ComponentInit args)
     {
-        if (ent.Comp.Path == default)
+        if (ent.Comp.Path == ResPath.Empty)
         {
             if (!TryComp<SpriteComponent>(ent, out var spriteComponent) || spriteComponent.BaseRSI == null)
             {
@@ -32,6 +42,8 @@ public sealed class SpriteStackingSystem : EntitySystem
             ent.Comp.Path = spriteComponent.BaseRSI.Path;
             ent.Comp.State = spriteComponent.LayerGetState(0).Name!;
             ent.Comp.UpdateStateOnSpriteChange = true;
+
+            spriteComponent.Visible = false;
         }
 
         if (!_resourceCache.TryGetResource<SpriteStackingResource>(ent.Comp.Path, out var spriteStackingResource))
