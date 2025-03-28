@@ -182,7 +182,7 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList,texture,_accumulator.UvVertexes); 
     }
 
-    private Vector2 Transform(Vector2 p1, Vector2 center, float Zlevel)
+    public Vector2 Transform(Vector2 p1, Vector2 center, float Zlevel)
     {
         return ApplyPerspectiveTransform(p1,Zlevel,
             _currentEye.Position.Position + _currentEye.Scale / 2,
