@@ -24,6 +24,8 @@ public sealed class InputMoverController : VirtualController
             .Bind(EngineKeyFunctions.MoveRight, new MoverDirInputCmdHandler(this, Direction.East))
             .Bind(EngineKeyFunctions.MoveDown, new MoverDirInputCmdHandler(this, Direction.South))
             .Bind(EngineKeyFunctions.Walk, new RunInputCmdHandler(this))
+            .Bind(EngineKeyFunctions.CameraRotateLeft, new RotateCameraInputCmdHandler(this, Angle.FromDegrees(1)))
+            .Bind(EngineKeyFunctions.CameraRotateRight, new RotateCameraInputCmdHandler(this, Angle.FromDegrees(-1)))
             .Register<InputMoverController>();
     }
 
@@ -31,10 +33,15 @@ public sealed class InputMoverController : VirtualController
     {
         if(!_inputMoverQuery.TryComp(sessionAttachedEntity, out var inputMoverComponent))
             return;
+        
+        var eyeAngle = Angle.Zero;
+        
+        if(TryComp<EyeComponent>(sessionAttachedEntity, out var eyeComponent)) 
+            eyeAngle = eyeComponent.Rotation;
 
         if (isDown)
         {
-            inputMoverComponent.Direction = angle;
+            inputMoverComponent.Direction = angle + eyeAngle;
             inputMoverComponent.PushedButtonCount += 1;
         }
         else

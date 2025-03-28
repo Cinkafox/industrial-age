@@ -1,3 +1,4 @@
+using Robust.Client.GameObjects;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Player;
@@ -38,6 +39,26 @@ sealed class RunInputCmdHandler : InputCmdHandler
         if (session?.AttachedEntity == null) return false;
         
         _controller.HandleRunChange(session.AttachedEntity.Value, message.SubTick, message.State == BoundKeyState.Down);
+        return false;
+    }
+}
+
+sealed class RotateCameraInputCmdHandler : InputCmdHandler
+{
+    private readonly InputMoverController _controller;
+    private readonly Angle _angle;
+
+    public RotateCameraInputCmdHandler(InputMoverController controller, Angle angle)
+    {
+        _controller = controller;
+        _angle = angle;
+    }
+
+    public override bool HandleCmdMessage(IEntityManager entManager, ICommonSession? session, IFullInputCmdMessage message)
+    {
+        if (session?.AttachedEntity == null || !entManager.TryGetComponent<EyeComponent>(session.AttachedEntity, out var eyeComponent)) return false;
+
+        entManager.System<EyeSystem>().SetRotation(session.AttachedEntity.Value, eyeComponent.Rotation + _angle);
         return false;
     }
 }

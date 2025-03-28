@@ -286,3 +286,13 @@ binds:
   - function: EditorCopyObject
     type: State
     key: P
+  # Camera
+  - function: CameraRotateLeft
+    type: State
+    key: NumpadNum7
+  - function: CameraRotateRight
+    type: State
+    key: NumpadNum9
+  - function: CameraReset
+    type: State
+    key: NumpadNum8

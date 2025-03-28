@@ -124,6 +124,7 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
 
     public void DrawLayer(Vector2 position, float Zlevel, Angle rotation, Texture texture, UIBox2? textureRegion = null, Vector2? scale = null)
     {
+        position += _currentEye.Offset;
         var sr = textureRegion ?? UIBox2.FromDimensions(Vector2.Zero, texture.Size);
         
         var currScale = scale ?? sr.Size / EyeManager.PixelsPerMeter;
@@ -135,6 +136,8 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         var p4 = new Vector2(p3.X, p1.Y);//RightTop
 
         var center = p1 + currScale / 2f;
+        
+        var rotTransEye = Matrix3x2.CreateRotation((float)_currentEye.Rotation);
         
         var rotTrans = Matrix3x2.CreateRotation((float)rotation);
 
@@ -152,6 +155,21 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         p2 += center;
         p3 += center;
         p4 += center;
+
+        p1 -= _currentEye.Position.Position;
+        p2 -= _currentEye.Position.Position;
+        p3 -= _currentEye.Position.Position;
+        p4 -= _currentEye.Position.Position;
+        
+        p1 = Vector2.Transform(p1, rotTransEye);
+        p2 = Vector2.Transform(p2, rotTransEye);
+        p3 = Vector2.Transform(p3, rotTransEye);
+        p4 = Vector2.Transform(p4, rotTransEye);
+        
+        p1 += _currentEye.Position.Position;
+        p2 += _currentEye.Position.Position;
+        p3 += _currentEye.Position.Position;
+        p4 += _currentEye.Position.Position;
 
         p1 = Transform(p1,center,Zlevel);
         p2 = Transform(p2,center,Zlevel);
