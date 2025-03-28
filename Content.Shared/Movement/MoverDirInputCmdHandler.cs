@@ -1,4 +1,3 @@
-using Robust.Client.GameObjects;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Player;
@@ -58,7 +57,7 @@ sealed class RotateCameraInputCmdHandler : InputCmdHandler
     {
         if (session?.AttachedEntity == null || !entManager.TryGetComponent<EyeComponent>(session.AttachedEntity, out var eyeComponent)) return false;
 
-        entManager.System<EyeSystem>().SetRotation(session.AttachedEntity.Value, eyeComponent.Rotation + _angle);
+        entManager.System<SharedEyeSystem>().SetRotation(session.AttachedEntity.Value, eyeComponent.Rotation + _angle);
         return false;
     }
 }

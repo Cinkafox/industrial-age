@@ -138,6 +138,7 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         var center = p1 + currScale / 2f;
         
         var rotTransEye = Matrix3x2.CreateRotation((float)_currentEye.Rotation);
+        var rotTransEyeNeg = Matrix3x2.CreateRotation(-(float)_currentEye.Rotation);
         
         var rotTrans = Matrix3x2.CreateRotation((float)rotation);
 
@@ -175,6 +176,21 @@ public sealed class DrawingHandleSpriteStacking : IDisposable
         p2 = Transform(p2,center,Zlevel);
         p3 = Transform(p3,center,Zlevel);
         p4 = Transform(p4,center,Zlevel);
+        
+        p1 -= _currentEye.Position.Position;
+        p2 -= _currentEye.Position.Position;
+        p3 -= _currentEye.Position.Position;
+        p4 -= _currentEye.Position.Position;
+        
+        p1 = Vector2.Transform(p1, rotTransEyeNeg);
+        p2 = Vector2.Transform(p2, rotTransEyeNeg);
+        p3 = Vector2.Transform(p3, rotTransEyeNeg);
+        p4 = Vector2.Transform(p4, rotTransEyeNeg);
+        
+        p1 += _currentEye.Position.Position;
+        p2 += _currentEye.Position.Position;
+        p3 += _currentEye.Position.Position;
+        p4 += _currentEye.Position.Position;
         
         if(!_bounds.Contains(p1) && 
            !_bounds.Contains(p2) && 

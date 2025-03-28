@@ -66,3 +66,18 @@
       sprite: Walls/test.rsi
       state: wall
     - type: SpriteStacking
+
+
+- type: entity
+  parent: BaseWall
+  id: PrinterTest
+  name: test printer
+  description: printer
+  components:
+    - type: Sprite
+      sprite: Structures/printer.rsi
+      state: printer
+    - type: Icon
+      sprite: Structures/printer.rsi
+      state: printer
+    - type: SpriteStacking

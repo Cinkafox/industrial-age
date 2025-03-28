@@ -33,15 +33,10 @@ public sealed class InputMoverController : VirtualController
     {
         if(!_inputMoverQuery.TryComp(sessionAttachedEntity, out var inputMoverComponent))
             return;
-        
-        var eyeAngle = Angle.Zero;
-        
-        if(TryComp<EyeComponent>(sessionAttachedEntity, out var eyeComponent)) 
-            eyeAngle = eyeComponent.Rotation;
 
         if (isDown)
         {
-            inputMoverComponent.Direction = angle + eyeAngle;
+            inputMoverComponent.Direction = angle;
             inputMoverComponent.PushedButtonCount += 1;
         }
         else
@@ -87,8 +82,13 @@ public sealed class InputMoverController : VirtualController
                 if (!_staminaSystem.UseStamina(uid, 0))
                     speedImpl = 0.25f;
             }
+            
+            var eyeAngle = Angle.Zero;
+        
+            if(TryComp<EyeComponent>(uid, out var eyeComponent)) 
+                eyeAngle = eyeComponent.Rotation;
 
-            var delta = (transformComponent.LocalRotation - inputMoverComponent.Direction).Normalise();
+            var delta = (transformComponent.LocalRotation - (inputMoverComponent.Direction)).Normalise();
 
             var currSpeed = inputMoverComponent.Magnitude * 4f * speedImpl;
 
