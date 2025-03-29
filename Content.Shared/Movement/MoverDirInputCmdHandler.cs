@@ -7,12 +7,12 @@ namespace Content.Shared.Movement;
 sealed class MoverDirInputCmdHandler : InputCmdHandler
 {
     private readonly InputMoverController _controller;
-    private readonly Angle _angle;
+    private readonly DirectionFlag _angle;
 
-    public MoverDirInputCmdHandler(InputMoverController controller, Direction direction)
+    public MoverDirInputCmdHandler(InputMoverController controller, DirectionFlag direction)
     {
         _controller = controller;
-        _angle = direction.ToAngle();
+        _angle = direction;
     }
 
     public override bool HandleCmdMessage(IEntityManager entManager, ICommonSession? session, IFullInputCmdMessage message)

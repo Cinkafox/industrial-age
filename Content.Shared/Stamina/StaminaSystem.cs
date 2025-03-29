@@ -34,6 +34,7 @@ public sealed class StaminaSystem : EntitySystem
         entity.Comp.Stamina = float.Clamp(entity.Comp.Stamina + value, 0f, entity.Comp.MaxStamina);
         
         _playerIndicatorSystem.Set(entity.Owner, StaminaIndicator.State, entity.Comp.Stamina);
+        Dirty(entity);
     }
 
     public bool UseStamina(Entity<StaminaComponent?> entity, float cost)
@@ -46,6 +47,7 @@ public sealed class StaminaSystem : EntitySystem
         entity.Comp.NextRegenerate = _gameTiming.CurTime + entity.Comp.RegenerateDelay;
         
         _playerIndicatorSystem.Set(entity.Owner, StaminaIndicator.State, entity.Comp.Stamina);
+        Dirty(entity);
         return staminaAfter > 0;
     }
     

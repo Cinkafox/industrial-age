@@ -12,6 +12,7 @@ public sealed class InputMoverController : VirtualController
 {
     private EntityQuery<InputMoverComponent> _inputMoverQuery;
     [Dependency] private readonly StaminaSystem _staminaSystem = default!;
+    [Dependency] private readonly SharedEyeSystem _sharedEyeSystem = default!;
     
     public override void Initialize()
     {
@@ -19,40 +20,57 @@ public sealed class InputMoverController : VirtualController
         _inputMoverQuery = GetEntityQuery<InputMoverComponent>();
         
         CommandBinds.Builder
-            .Bind(EngineKeyFunctions.MoveUp, new MoverDirInputCmdHandler(this, Direction.North))
-            .Bind(EngineKeyFunctions.MoveLeft, new MoverDirInputCmdHandler(this, Direction.West))
-            .Bind(EngineKeyFunctions.MoveRight, new MoverDirInputCmdHandler(this, Direction.East))
-            .Bind(EngineKeyFunctions.MoveDown, new MoverDirInputCmdHandler(this, Direction.South))
+            .Bind(EngineKeyFunctions.MoveUp, new MoverDirInputCmdHandler(this, DirectionFlag.North))
+            .Bind(EngineKeyFunctions.MoveLeft, new MoverDirInputCmdHandler(this, DirectionFlag.West))
+            .Bind(EngineKeyFunctions.MoveRight, new MoverDirInputCmdHandler(this, DirectionFlag.East))
+            .Bind(EngineKeyFunctions.MoveDown, new MoverDirInputCmdHandler(this, DirectionFlag.South))
             .Bind(EngineKeyFunctions.Walk, new RunInputCmdHandler(this))
             .Bind(EngineKeyFunctions.CameraRotateLeft, new RotateCameraInputCmdHandler(this, Angle.FromDegrees(1)))
             .Bind(EngineKeyFunctions.CameraRotateRight, new RotateCameraInputCmdHandler(this, Angle.FromDegrees(-1)))
             .Register<InputMoverController>();
     }
 
-    public void HandleDirChange(EntityUid sessionAttachedEntity, Angle angle, ushort messageSubTick, bool isDown)
+    public void HandleDirChange(EntityUid sessionAttachedEntity, DirectionFlag direction, ushort messageSubTick, bool isDown)
     {
         if(!_inputMoverQuery.TryComp(sessionAttachedEntity, out var inputMoverComponent))
             return;
+        
+        var eyeAngle = Angle.Zero;
+        
+        if(TryComp<EyeComponent>(sessionAttachedEntity, out var eyeComponent)) 
+            eyeAngle = eyeComponent.Rotation;
+
+        var doWalk = true;
 
         if (isDown)
         {
-            inputMoverComponent.Direction = angle;
-            inputMoverComponent.PushedButtonCount += 1;
+            inputMoverComponent.WalkDirection |= direction;
+            if (inputMoverComponent.WalkDirection.TryAsDir(out var dir))
+            {
+                inputMoverComponent.Direction = dir.ToAngle();
+            }
+            else
+            {
+                doWalk = false;
+            }
         }
         else
         {
-            inputMoverComponent.PushedButtonCount -= 1;
+            inputMoverComponent.WalkDirection &= ~direction;
         }
-
-        var curr = inputMoverComponent.PushedButtonCount > 0 ? 1f : 0f;
+        
+        var curr = (inputMoverComponent.WalkDirection == DirectionFlag.None && doWalk) ? 0f : 1f;
+        var old = inputMoverComponent.Magnitude;
+        
+        inputMoverComponent.Magnitude = curr;
+        
+        Dirty(sessionAttachedEntity, inputMoverComponent);
         
         RaiseLocalEvent(sessionAttachedEntity, new MoveInputEvent()
         {
-            OldMagnitude = inputMoverComponent.Magnitude, CurrentMagnitude = curr
+            OldMagnitude = old, CurrentMagnitude = curr
         });
         
-
-        inputMoverComponent.Magnitude = curr;
     }
 
     public void HandleRunChange(EntityUid sessionAttachedEntity, ushort messageSubTick, bool isRunning)
@@ -67,8 +85,6 @@ public sealed class InputMoverController : VirtualController
     {
         base.UpdateBeforeSolve(prediction, frameTime);
         
-        if (!IoCManager.Resolve<IGameTiming>().IsFirstTimePredicted) return;
-        
         var query = EntityQueryEnumerator<InputMoverComponent, TransformComponent, PhysicsComponent>();
 
         while (query.MoveNext(out var uid, out var inputMoverComponent, out var transformComponent, out var physicsComponent))
@@ -82,11 +98,6 @@ public sealed class InputMoverController : VirtualController
                 if (!_staminaSystem.UseStamina(uid, 0))
                     speedImpl = 0.25f;
             }
-            
-            var eyeAngle = Angle.Zero;
-        
-            if(TryComp<EyeComponent>(uid, out var eyeComponent)) 
-                eyeAngle = eyeComponent.Rotation;
 
             var delta = (transformComponent.LocalRotation - (inputMoverComponent.Direction)).Normalise();
 
@@ -111,6 +122,40 @@ public static class AngleExt
         while (angle < -MathF.PI)
             angle += 2 * MathF.PI;
         return angle;
+    }
+    
+    public static bool TryAsDir(this DirectionFlag directionFlag, out Direction dir)
+    {
+        switch (directionFlag)
+        {
+            case DirectionFlag.South:
+                dir = Direction.South;
+                return true;
+            case DirectionFlag.SouthEast:
+                dir = Direction.SouthEast;
+                return true;
+            case DirectionFlag.East:
+                dir = Direction.East;
+                return true;
+            case DirectionFlag.NorthEast:
+                dir = Direction.NorthEast;
+                return true;
+            case DirectionFlag.North:
+                dir = Direction.North;
+                return true;
+            case DirectionFlag.NorthWest:
+                dir = Direction.NorthWest;
+                return true;
+            case DirectionFlag.West:
+                dir = Direction.West;
+                return true;
+            case DirectionFlag.SouthWest:
+                dir = Direction.SouthWest;
+                return true;
+            default:
+                dir = Direction.Invalid;
+                return false;
+        }
     }
 }
 
