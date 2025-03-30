@@ -42,5 +42,6 @@ public sealed class CCVars : CVars
      * STACKSPRITING
      */
     
+    public static readonly CVarDef<bool> StackRenderEnabled = CVarDef.Create("stacksprite.enabled", true, CVar.CLIENT);
     public static readonly CVarDef<int> StackByOneLayer = CVarDef.Create("stacksprite.layer_count", 2, CVar.CLIENT);
 }

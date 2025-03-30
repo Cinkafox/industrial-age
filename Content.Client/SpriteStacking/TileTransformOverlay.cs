@@ -3,6 +3,7 @@ using System.Numerics;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Utility;
+using Robust.Shared.Configuration;
 using Robust.Shared.ContentPack;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -18,40 +19,40 @@ namespace Content.Client.SpriteStacking;
 public sealed class TileTransformOverlay : GridOverlay
 {
     public override bool RequestScreenTexture => true;
-
-    [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly IEyeManager _eyeManager = default!;
     [Dependency] private readonly ProfManager _profManager = default!;
-    [Dependency] private readonly IMapManager _mapManager = default!;
+    [Dependency] private readonly IConfigurationManager _configurationManager = default!;
     [Dependency] private readonly ITileDefinitionManager _tileDefinitionManager = default!;
     [Dependency] private readonly IResourceManager _manager = default!;
     
     private readonly TransformSystem _transformSystem;
-    private readonly SpriteSystem _spriteSystem;
     private readonly MapSystem _mapSystem;
     public TileTransformOverlay()
     {
         IoCManager.InjectDependencies(this);
         _transformSystem = _entityManager.System<TransformSystem>();
-        _spriteSystem = _entityManager.System<SpriteSystem>();
         _mapSystem = _entityManager.System<MapSystem>();
         _genTextureAtlas();
     }
     
     private readonly Dictionary<int, UIBox2[]> _tileRegions = new();
     private Texture? _tileTextureAtlas;
+    
+    protected override bool BeforeDraw(in OverlayDrawArgs args)
+    {
+        return _configurationManager.GetCVar<bool>("stacksprite.enabled");
+    }
 
     protected override void Draw(in OverlayDrawArgs args)
     {
         if (ScreenTexture == null)
             return;
         
-        var eye = _eyeManager.CurrentEye;
+        var eye = args.Viewport.Eye!;
         var bounds = args.WorldAABB.Enlarged(5f);
         
         using var draw = _profManager.Group("TileDrawStack");
-        using var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, _profManager, SpriteStackingOverlay.Accumulator);
+        var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, SpriteStackingOverlay.TransformContext);
         
         DrawGrid(handle);
     }
@@ -149,7 +150,7 @@ public sealed class TileTransformOverlay : GridOverlay
                 
 
                 regionList[j] = UIBox2.FromDimensions(
-                    point.X, point.Y - EyeManager.PixelsPerMeter,
+                    point.X, sheet.Width - point.Y - EyeManager.PixelsPerMeter,
                     tileSize , tileSize );
                 column++;
 

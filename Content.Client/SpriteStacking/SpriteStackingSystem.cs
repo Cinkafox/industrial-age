@@ -1,6 +1,8 @@
+using Content.Shared.ContentVariables;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
+using Robust.Shared.Configuration;
 using Robust.Shared.Utility;
 
 namespace Content.Client.SpriteStacking;
@@ -8,24 +10,28 @@ namespace Content.Client.SpriteStacking;
 public sealed class SpriteStackingSystem : EntitySystem
 {
     [Dependency] private readonly IOverlayManager _overlayManager = default!;
-    [Dependency] private readonly IEyeManager _eyeManager = default!;
-    [Dependency] private readonly TransformSystem _transformSystem = default!;
     [Dependency] private readonly IResourceCache _resourceCache = default!;
-    [Dependency] private readonly SpriteSystem _spriteSystem = default!;
+    [Dependency] private readonly IConfigurationManager _configurationManager = default!;
     
     public override void Initialize()
     {
+        _configurationManager.OnValueChanged(CCVars.StackRenderEnabled, OnRenderEnabledChanged, true);
         _overlayManager.AddOverlay(new SpriteStackingOverlay());
         _overlayManager.AddOverlay(new TileTransformOverlay());
+        _overlayManager.AddOverlay(new EntTransformOverlay());
         SubscribeLocalEvent<SpriteStackingComponent, ComponentInit>(OnInit);
-        SubscribeLocalEvent<SpriteStackingComponent, ComponentShutdown>(OnShutdown);
     }
 
-    private void OnShutdown(Entity<SpriteStackingComponent> ent, ref ComponentShutdown args)
+    private void OnRenderEnabledChanged(bool obj)
     {
-        if (!TryComp<SpriteComponent>(ent, out var spriteComponent))
-            return;
-        spriteComponent.Visible = true;
+        if (!obj)
+        {
+            var query = EntityQueryEnumerator<SpriteComponent>();
+            while (query.MoveNext(out var spriteComponent))
+            {
+                spriteComponent.Visible = true;
+            }
+        }
     }
 
     private void OnInit(Entity<SpriteStackingComponent> ent, ref ComponentInit args)
@@ -42,8 +48,6 @@ public sealed class SpriteStackingSystem : EntitySystem
             ent.Comp.Path = spriteComponent.BaseRSI.Path;
             ent.Comp.State = spriteComponent.LayerGetState(0).Name!;
             ent.Comp.UpdateStateOnSpriteChange = true;
-
-            spriteComponent.Visible = false;
         }
 
         if (!_resourceCache.TryGetResource<SpriteStackingResource>(ent.Comp.Path, out var spriteStackingResource))
@@ -56,7 +60,7 @@ public sealed class SpriteStackingSystem : EntitySystem
         ent.Comp.Data = spriteStackingResource.Data;
     }
 
-    public override void Update(float frameTime)
+    public override void FrameUpdate(float frameTime)
     {
         var query = EntityQueryEnumerator<SpriteStackingComponent, SpriteComponent>();
         while (query.MoveNext(out var uid, out var spriteStackingComponent, out var spriteComponent))
