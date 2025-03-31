@@ -56,8 +56,9 @@ sealed class RotateCameraInputCmdHandler : InputCmdHandler
     public override bool HandleCmdMessage(IEntityManager entManager, ICommonSession? session, IFullInputCmdMessage message)
     {
         if (session?.AttachedEntity == null || !entManager.TryGetComponent<EyeComponent>(session.AttachedEntity, out var eyeComponent)) return false;
-
-        entManager.System<SharedEyeSystem>().SetRotation(session.AttachedEntity.Value, eyeComponent.Rotation + _angle);
+        
+        entManager.System<SharedEyeSystem>().SetRotation(session.AttachedEntity.Value, eyeComponent.Rotation + _angle, eyeComponent);
+        entManager.Dirty(session.AttachedEntity.Value, eyeComponent);
         return false;
     }
 }
