@@ -70,7 +70,7 @@
 
 - type: entity
   parent: BaseWall
-  id: PrinterTest
+  id: Printer
   name: test printer
   description: printer
   components:
@@ -80,4 +80,46 @@
     - type: Icon
       sprite: Structures/printer.rsi
       state: printer
+    - type: SpriteStacking
+      
+- type: entity
+  parent: BaseWall
+  id: Wall
+  name: wall
+  description: wall
+  components:
+    - type: Sprite
+      sprite: Structures/wall.rsi
+      state: structure
+    - type: Icon
+      sprite: Structures/wall.rsi
+      state: structure
+    - type: SpriteStacking
+      
+- type: entity
+  parent: BaseWall
+  id: WallWire
+  name: wall
+  description: wall
+  components:
+    - type: Sprite
+      sprite: Structures/wall_wire.rsi
+      state: structure
+    - type: Icon
+      sprite: Structures/wall_wire.rsi
+      state: structure
+    - type: SpriteStacking
+      
+- type: entity
+  parent: BaseWall
+  id: Chest
+  name: chest
+  description: wall
+  components:
+    - type: Sprite
+      sprite: Structures/chest.rsi
+      state: structure
+    - type: Icon
+      sprite: Structures/chest.rsi
+      state: structure
     - type: SpriteStacking

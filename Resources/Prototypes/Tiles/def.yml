@@ -5,3 +5,7 @@
 - type: tile
   id: snow
   sprite: /Textures/Tiles/snow.png
+  
+- type: tile
+  id: tech
+  sprite: /Textures/Tiles/bottom.png
