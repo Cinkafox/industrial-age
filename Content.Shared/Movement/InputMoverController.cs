@@ -35,11 +35,6 @@ public sealed class InputMoverController : VirtualController
         if(!_inputMoverQuery.TryComp(sessionAttachedEntity, out var inputMoverComponent))
             return;
         
-        var eyeAngle = Angle.Zero;
-        
-        if(TryComp<EyeComponent>(sessionAttachedEntity, out var eyeComponent)) 
-            eyeAngle = eyeComponent.Rotation;
-
         var doWalk = true;
 
         if (isDown)
@@ -79,6 +74,7 @@ public sealed class InputMoverController : VirtualController
             return;
         
         inputMoverComponent.IsRunning = isRunning;
+        Dirty(sessionAttachedEntity, inputMoverComponent);
     }
 
     public override void UpdateBeforeSolve(bool prediction, float frameTime)
@@ -98,8 +94,12 @@ public sealed class InputMoverController : VirtualController
                 if (!_staminaSystem.UseStamina(uid, 0))
                     speedImpl = 0.25f;
             }
+            
+            var eyeAngle = Angle.Zero;
+            if(TryComp<EyeComponent>(uid, out var eyeComponent)) 
+                eyeAngle = eyeComponent.Rotation * 6.9; // Prediction shit, and client has rotation 6.9 more than server. Shit fuck.
 
-            var delta = (transformComponent.LocalRotation - (inputMoverComponent.Direction)).Normalise();
+            var delta = (transformComponent.LocalRotation - (-eyeAngle + inputMoverComponent.Direction)).Normalise();
 
             var currSpeed = inputMoverComponent.Magnitude * 4f * speedImpl;
 
