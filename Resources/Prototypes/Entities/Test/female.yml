@@ -3,6 +3,7 @@
   id: EntFemale
   description: Test think
   components:
+    - type: WorldLoader
     - type: Sprite
       sprite: Entities/Test/female.rsi
       layers:
@@ -36,6 +37,7 @@
   id: EntMale
   description: Test think
   components:
+    - type: WorldLoader
     - type: Sprite
       sprite: Entities/Test/male.rsi
       layers:

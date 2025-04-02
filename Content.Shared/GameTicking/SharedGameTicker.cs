@@ -44,27 +44,7 @@ public abstract partial class SharedGameTicker : EntitySystem
         MapUid = MapSystem.CreateMap(out var mapId);
         GridUid = MapManager.CreateGridEntity(MapUid,GridCreateOptions.Default);
         
-        var width = 55;
-        var height = 55;
-        
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                var sx = x - width / 2;
-                var sy= y - height / 2;
-                
-                MapSystem.SetTile(GridUid, new Vector2i(sx,sy),new Robust.Shared.Map.Tile(2));
-            }
-        }
-        
-        Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(2,2)));
-        Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(3,2)));
-        Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(1,2)));
-        
-        SpawnRotate(Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(2,-2))),Angle.FromDegrees(180));
-        SpawnRotate(Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(3,-2))),Angle.FromDegrees(180));
-        SpawnRotate(Spawn("WallTest", new EntityCoordinates(GridUid, new Vector2(1,-2))),Angle.FromDegrees(180));
+        RaiseLocalEvent(new GameInitializedEvent(MapUid, GridUid));
     }
 
     public void SpawnRotate(EntityUid uid, Angle angle)
@@ -73,3 +53,5 @@ public abstract partial class SharedGameTicker : EntitySystem
         transform.LocalRotation = angle;
     }
 }
+
+public record struct GameInitializedEvent(EntityUid MapUid, EntityUid GridUid);

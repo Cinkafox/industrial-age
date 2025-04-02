@@ -14,7 +14,6 @@ public sealed class EntryPoint : GameServer
     {
         IoCManager.BuildGraph();
         IoCManager.InjectDependencies(this);
-        //IoCManager.Resolve<IPrototypeManager>().RegisterIgnore("dynamicValue");
     }
 
     public override void Init()
