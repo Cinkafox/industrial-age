@@ -123,3 +123,31 @@
       sprite: Structures/chest.rsi
       state: structure
     - type: SpriteStacking
+      
+- type: entity
+  parent: BaseWall
+  id: Grass
+  name: grass
+  description: grass
+  components:
+    - type: Sprite
+      sprite: Structures/grass.rsi
+      state: grass
+    - type: Icon
+      sprite: Structures/grass.rsi
+      state: grass
+    - type: SpriteStacking
+      
+- type: entity
+  parent: BaseWall
+  id: Tree
+  name: tree
+  description: tree
+  components:
+    - type: Sprite
+      sprite: Structures/tree.rsi
+      state: tree
+    - type: Icon
+      sprite: Structures/tree.rsi
+      state: tree
+    - type: SpriteStacking

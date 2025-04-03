@@ -9,7 +9,7 @@ namespace Content.Shared.World;
 public sealed partial class WorldGenComponent : Component
 {
     [DataField] public WorldGenData WorldGenData;
-    [DataField] public ProtoId<WorldGenPrototype>? WorldGenPrototype;
+    [DataField] public ProtoId<WorldGenPrototype> WorldGenPrototype = "default";
     [DataField] public Dictionary<Vector2i,WorldChunk> LoadedChunks = new(); 
 }
 
@@ -18,14 +18,14 @@ public sealed partial class WorldChunk
 {
     public static readonly int ChunkSize = 8;
     
-    [DataField] public WorldGenEntry[] Entries = new WorldGenEntry[ChunkSize * ChunkSize];
+    [DataField] public WorldTileEntry[] Entries = new WorldTileEntry[ChunkSize * ChunkSize];
 
-    public WorldGenEntry GetEntry(Vector2i localPosition)
+    public WorldTileEntry GetEntry(Vector2i localPosition)
     {
         return Entries[localPosition.X * ChunkSize + localPosition.Y];
     }
 
-    public IEnumerable<(Vector2i, WorldGenEntry)> GetEntries()
+    public IEnumerable<(Vector2i, WorldTileEntry)> GetEntries()
     {
         for (int x = 0; x < ChunkSize; x++)
         {

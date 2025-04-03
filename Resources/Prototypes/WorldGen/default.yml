@@ -1,0 +1,23 @@
+- type: worldGen
+  id: default
+  data:
+    noiseWorld:
+      - amplitude: 1
+        noise:
+          noiseType: Perlin
+          frequency: 0.02
+    tileElevation: 
+      0: water
+      0.1: grass
+    defaultTile: water
+    additions: 
+      - !type:EntWorldGenAddition
+        entity: Grass
+        spawnСhance: 0.25
+        tileWhitelist:
+          - grass
+      - !type:EntWorldGenAddition
+        entity: Tree
+        spawnСhance: 0.15
+        tileWhitelist:
+          - grass

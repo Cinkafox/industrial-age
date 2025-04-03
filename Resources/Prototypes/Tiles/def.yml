@@ -1,11 +1,11 @@
 ﻿- type: tile
-  id: def
-  sprite: /Textures/Tiles/def.png
-  
-- type: tile
   id: snow
   sprite: /Textures/Tiles/snow.png
   
 - type: tile
-  id: tech
-  sprite: /Textures/Tiles/bottom.png
+  id: water
+  sprite: /Textures/Tiles/water.png
+  
+- type: tile
+  id: grass
+  sprite: /Textures/Tiles/grass.png

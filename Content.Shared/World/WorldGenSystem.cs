@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Numerics;
 using Content.Shared.GameTicking;
 using Content.Shared.StateManipulation;
 using Content.Shared.Tile;
@@ -15,18 +16,11 @@ namespace Content.Shared.World;
 
 public sealed class WorldGenSystem : EntitySystem
 {
-    [Dependency] private readonly SharedGameTicker _gameTicker = default!;
-    [Dependency] private readonly IMapManager _mapManager = default!;
     [Dependency] private readonly SharedMapSystem _mapSystem = default!;
-    [Dependency] private readonly ISharedPlayerManager _playerManager = default!;
-    [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
-    [Dependency] private readonly SharedPointLightSystem _lightSystem = default!;
     [Dependency] private readonly IRobustRandom _robustRandom = default!;
-    [Dependency] private readonly IContentStateManager _contentStateManager = default!;
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
-    [Dependency] private readonly IGameTiming _gameTiming = default!;
-    [Dependency] private readonly INetManager _netManager = default!;
     [Dependency] private readonly ITileDefinitionManager _tileDefinitionManager = default!;
+    [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
 
     public override void Initialize()
     {
@@ -48,46 +42,31 @@ public sealed class WorldGenSystem : EntitySystem
 
     private void OnChunkCreated(Entity<MapGridComponent> ent, ref ChunkCreatedEvent args)
     {
-        Logger.Debug("LOADING CHUNK IN " + args.ChunkPos);
         foreach (var (localPos, entry) in args.Chunk.GetEntries())
         {
             var realPos = localPos + args.ChunkPos * WorldChunk.ChunkSize;
             _mapSystem.SetTile(ent, realPos, entry.Tile);
+            foreach (var entity in entry.Entities)
+            {
+                var uid = Spawn(entity.Entity);
+                _transformSystem.SetParent(uid, ent);
+                _transformSystem.SetLocalPosition(uid, realPos + entity.Offset + Vector2.One / 2);
+                _transformSystem.SetLocalRotation(uid, entity.Rotation);
+            }
         }
     }
 
     private void OnComponentInit(Entity<WorldGenComponent> ent, ref ComponentInit args)
     {
-        if (ent.Comp.WorldGenPrototype != null)
-            ent.Comp.WorldGenData = _prototypeManager.Index(ent.Comp.WorldGenPrototype.Value).Data;
+        if(ent.Comp.WorldGenData == default)
+            ent.Comp.WorldGenData = _prototypeManager.Index(ent.Comp.WorldGenPrototype).Data;
     }
 
     private void OnGameInitialized(GameInitializedEvent ev)
     {
         var worldComp = AddComp<WorldGenComponent>(ev.GridUid);
-        worldComp.WorldGenData = new WorldGenData();
-
-        var noise = new FastNoiseLite();
-        noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-        worldComp.WorldGenData.NoiseWorld.Add(new NoiseAmplitude(noise, 1f));
-        worldComp.WorldGenData.TileElevation.Add(0f, "snow");
-        worldComp.WorldGenData.TileElevation.Add(0.1f, "def");
-        worldComp.WorldGenData.DefaultTile = "def";
         
         RegenerateChunks(new Entity<WorldGenComponent>(ev.GridUid, worldComp), new Vector2i(0,0),4);
-    }
-    
-    public WorldGenEntry GetEntry(Entity<WorldGenComponent> ent, Vector2i pos)
-    {
-       var height = GetNoise(ent, pos);
-       var tileProto = GetTile(ent, height);
-       
-       if(!_tileDefinitionManager.TryGetDefinition(tileProto, out var definition)) 
-           return default;
-       
-       var tile = _tileDefinitionManager.GetVariantTile(definition, _robustRandom);
-
-       return new WorldGenEntry(height, tile, []);
     }
 
     public void RegenerateChunks(Entity<WorldGenComponent> entity,Vector2i chunkPos, int radius)
@@ -105,7 +84,6 @@ public sealed class WorldGenSystem : EntitySystem
     {
         if (ent.Comp.LoadedChunks.TryGetValue(pos, out var chunk))
         {
-            RaiseLocalEvent(ent, new ChunkLoadedEvent(pos, chunk));
             return chunk;
         }
 
@@ -122,8 +100,29 @@ public sealed class WorldGenSystem : EntitySystem
         ent.Comp.LoadedChunks.Add(pos, chunk);
         
         RaiseLocalEvent(ent, new ChunkCreatedEvent(pos, chunk));
-        RaiseLocalEvent(ent, new ChunkLoadedEvent(pos, chunk));
         return chunk;
+    }
+    
+    private WorldTileEntry GetEntry(Entity<WorldGenComponent> ent, Vector2i pos)
+    {
+        var height = GetNoise(ent, pos);
+        var tileProto = GetTile(ent, height);
+       
+        if(!_tileDefinitionManager.TryGetDefinition(tileProto, out var definition)) 
+            return new WorldTileEntry(height, new Robust.Shared.Map.Tile(0), tileProto);
+       
+        var tile = _tileDefinitionManager.GetVariantTile(definition, _robustRandom);
+
+        var entry = new WorldTileEntry(height, tile, tileProto);
+
+        foreach (var addition in ent.Comp.WorldGenData.Additions)
+        {
+            addition.Invoke(ent.Comp.WorldGenData, entry, pos, _robustRandom);
+        }
+        
+        RaiseLocalEvent(ent, new TileEntryLoading(entry, pos));
+        
+        return entry;
     }
 
 
@@ -166,5 +165,6 @@ public sealed class WorldGenSystem : EntitySystem
     }
 }
 
-public record struct ChunkLoadedEvent(Vector2i ChunkPos, WorldChunk Chunk);
 public record struct ChunkCreatedEvent(Vector2i ChunkPos, WorldChunk Chunk);
+
+public record struct TileEntryLoading(WorldTileEntry Entry, Vector2i Pos);
