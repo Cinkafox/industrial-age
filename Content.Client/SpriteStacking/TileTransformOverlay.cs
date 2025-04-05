@@ -5,6 +5,7 @@ using Robust.Client.Graphics;
 using Robust.Client.Utility;
 using Robust.Shared.Configuration;
 using Robust.Shared.ContentPack;
+using Robust.Shared.Graphics;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Profiling;
@@ -18,7 +19,6 @@ namespace Content.Client.SpriteStacking;
 
 public sealed class TileTransformOverlay : GridOverlay
 {
-    public override bool RequestScreenTexture => true;
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly ProfManager _profManager = default!;
     [Dependency] private readonly IConfigurationManager _configurationManager = default!;
@@ -45,16 +45,13 @@ public sealed class TileTransformOverlay : GridOverlay
 
     protected override void Draw(in OverlayDrawArgs args)
     {
-        if (ScreenTexture == null)
-            return;
-        
         var eye = args.Viewport.Eye!;
         var bounds = args.WorldAABB.Enlarged(5f);
         
         using var draw = _profManager.Group("TileDrawStack");
         var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, SpriteStackingOverlay.TransformContext);
         
-        DrawGrid(handle);
+        DrawGrid(handle, args);
     }
     
     public UIBox2[]? TileAtlasRegion(Tile tile)
@@ -72,14 +69,14 @@ public sealed class TileTransformOverlay : GridOverlay
         return null;
     }
     
-    private void DrawGrid(DrawingHandleSpriteStacking handle)
+    private void DrawGrid(DrawingHandleSpriteStacking handle,in OverlayDrawArgs args)
     {
-        var tiles = _mapSystem.GetAllTilesEnumerator(Grid, Grid.Comp);
+        //var tiles = _mapSystem.GetAllTilesEnumerator(Grid, Grid.Comp);
+        var AABB = args.WorldAABB.Enlarged(5f);
+        var tiles = _mapSystem.GetLocalTilesEnumerator(Grid, Grid.Comp, AABB);
         
-        while (tiles.MoveNext(out var tileDefVa))
+        while (tiles.MoveNext(out var tileDef))
         {
-            var tileDef = tileDefVa.Value;
-            
             var tile = tileDef.Tile;
             var regionMaybe = TileAtlasRegion(tile)![tile.Variant];
             

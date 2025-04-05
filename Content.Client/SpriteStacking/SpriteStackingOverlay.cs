@@ -49,11 +49,28 @@ public sealed class SpriteStackingOverlay : Overlay
         
         var eye = args.Viewport.Eye!;
         var bounds = args.WorldAABB.Enlarged(5f);
-        var query = _entityManager.EntityQueryEnumerator<SpriteStackingComponent, TransformComponent>();
 
         using var draw = _profManager.Group("SpriteStackDraw");
         var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, TransformContext);
         
+        DrawThink(eye, handle, bounds);
+    }
+
+    private void DrawFunny( 
+        IEye eye, 
+        DrawingHandleSpriteStacking handle, 
+        Box2 bounds)
+    {
+        
+    }
+
+    private void DrawThink(
+        IEye eye, 
+        DrawingHandleSpriteStacking handle, 
+        Box2 bounds
+        )
+    {
+        var query = _entityManager.EntityQueryEnumerator<SpriteStackingComponent, TransformComponent>();
         while (query.MoveNext(out var uid, out var stackSpriteComponent, out var transformComponent))
         {
             if(transformComponent.MapID != eye.Position.MapId) continue;
@@ -96,6 +113,7 @@ public sealed class SpriteStackingOverlay : Overlay
         }
     }
 }
+
 
 public interface ITransformContext
 {
