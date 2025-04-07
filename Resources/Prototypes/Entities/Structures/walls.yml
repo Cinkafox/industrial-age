@@ -133,6 +133,7 @@
     - type: Sprite
       sprite: Structures/grass.rsi
       state: grass
+      noRot: true
     - type: Icon
       sprite: Structures/grass.rsi
       state: grass
@@ -147,6 +148,7 @@
     - type: Sprite
       sprite: Structures/tree.rsi
       state: tree
+      noRot: true
     - type: Icon
       sprite: Structures/tree.rsi
       state: tree

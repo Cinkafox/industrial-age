@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Content.Shared.ContentVariables;
 using Robust.Client.GameObjects;
@@ -10,7 +11,7 @@ using Robust.Shared.Profiling;
 namespace Content.Client.SpriteStacking;
 
 
-public record struct StackData(Vector2 Position, Angle Rotation, Texture Texture, UIBox2 TextureRect);
+public record struct StackData(Vector2 Position, Angle Rotation, Texture Texture, UIBox2 TextureRect, int Z);
 public sealed class SpriteStackingOverlay : Overlay
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
@@ -23,8 +24,10 @@ public sealed class SpriteStackingOverlay : Overlay
     
     public override OverlaySpace Space => OverlaySpace.WorldSpaceBelowFOV;
 
-    private SortedDictionary<int, HashSet<StackData>> _layers = new();
+    private SortedDictionary<float, HashSet<StackData>> _layers = new();
     public static readonly ITransformContext TransformContext = new ShittyTransformContext();
+    
+    private DrawingSpriteStackingContext _drawingContext = new();
 
     public SpriteStackingOverlay()
     {
@@ -45,31 +48,59 @@ public sealed class SpriteStackingOverlay : Overlay
 
     protected override void Draw(in OverlayDrawArgs args)
     {
-        _layers.Clear();
-        
         var eye = args.Viewport.Eye!;
         var bounds = args.WorldAABB.Enlarged(5f);
 
         using var draw = _profManager.Group("SpriteStackDraw");
-        var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, TransformContext);
+        var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, TransformContext, _drawingContext);
         
         DrawThink(eye, handle, bounds);
     }
 
-    private void DrawFunny( 
+    private void DrawEntities( 
         IEye eye, 
         DrawingHandleSpriteStacking handle, 
         Box2 bounds)
     {
+        var query = 
+            _entityManager.EntityQuery<SpriteStackingComponent, TransformComponent>()
+                .Where((tuple => tuple.Item2.MapID == eye.Position.MapId))
+                .OrderBy((tuple => -RotateVector(tuple.Item2.WorldPosition, eye).Y));
         
-    }
+        foreach (var (spriteStackingComponent, transformComponent) in query)
+        {
+            var drawPos = transformComponent.WorldPosition - new Vector2(0.5f);;
+            if(!bounds.Contains(drawPos))
+                continue;
+            
+            var datum = spriteStackingComponent.Data;
+            var texture = datum.States[spriteStackingComponent.State];
+            var size = datum.Metadata.Size;
+            
+            for (var i = 0; i < datum.Metadata.Height; i++)
+            {
+                var xIndex = i / texture.Width;
+                var yIndex = i % texture.Height;
 
+                var sr = UIBox2.FromDimensions(new Vector2(xIndex * size.X, yIndex * size.Y), size);
+
+                for (var y = 0; y < _stackByOneLayer; y++)
+                {
+                    var realZ = i + y / (float)_stackByOneLayer;
+
+                    handle.DrawLayer(drawPos, realZ, transformComponent.WorldRotation, texture, sr);
+                }
+            }
+        }
+    }
+    
     private void DrawThink(
         IEye eye, 
         DrawingHandleSpriteStacking handle, 
         Box2 bounds
-        )
+    )
     {
+        _layers.Clear();
         var query = _entityManager.EntityQueryEnumerator<SpriteStackingComponent, TransformComponent>();
         while (query.MoveNext(out var uid, out var stackSpriteComponent, out var transformComponent))
         {
@@ -92,26 +123,34 @@ public sealed class SpriteStackingOverlay : Overlay
                 
                 if(!_layers.TryGetValue(i, out var list))
                 {
-                    list = new System.Collections.Generic.HashSet<StackData>();
+                    list = new HashSet<StackData>();
                     _layers.Add(i, list);
                 }
                 
-                list.Add(new StackData(drawPos, _transformSystem.GetWorldRotation(uid), texture, sr));
+                list.Add(new StackData(drawPos, _transformSystem.GetWorldRotation(uid), texture, sr, i));
             }
         }
 
-        foreach ((var Z, var stackData) in _layers)
+        foreach (var (_, stackData) in _layers)
         {
             foreach (var stack in stackData)
             {
                 for (int i = 0; i < _stackByOneLayer; i++)
                 {
-                    var realZ = Z + i / (float)_stackByOneLayer;
+                    var realZ = stack.Z + i / (float)_stackByOneLayer;
                     handle.DrawLayer(stack.Position, realZ, stack.Rotation, stack.Texture, stack.TextureRect);
                 }
             }
         }
     }
+
+    private Vector2 RotateVector(Vector2 vector, IEye eye)
+    {
+        vector -= eye.Position.Position;
+        vector = eye.Rotation.RotateVec(vector);
+        return vector + eye.Position.Position;
+    }
+    
 }
 
 
@@ -144,29 +183,49 @@ public sealed class ShittyTransformContext : ITransformContext
     }
 }
 
+public sealed class DrawingSpriteStackingContext
+{
+    public DrawVertexUV2D[] UvVertexes = new DrawVertexUV2D[4]; 
+    
+    public Vector2 p1;
+    public Vector2 p2;
+    public Vector2 p3;
+    public Vector2 p4;
+
+    public Matrix3x2 rotTransEye;
+    public Matrix3x2 rotTransEyeNeg;
+    public Matrix3x2 rotTrans;
+    
+    public Vector2 currScale;
+    public Vector2 center;
+
+    public DrawingSpriteStackingContext()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            UvVertexes[i] = new DrawVertexUV2D();
+        }
+    }
+}
+
 public sealed class DrawingHandleSpriteStacking
 {
     private DrawingHandleBase _baseHandle;
     private IEye _currentEye;
     private Box2 _bounds;
     private ITransformContext _transformContext;
+    private readonly DrawingSpriteStackingContext _drawingContext;
 
-    public DrawingHandleSpriteStacking(DrawingHandleBase baseHandle, IEye currentEye, Box2 bounds, ITransformContext transformContext)
+    public DrawingHandleSpriteStacking(DrawingHandleBase baseHandle, IEye currentEye, Box2 bounds, ITransformContext transformContext, DrawingSpriteStackingContext drawingContext)
     {
         _baseHandle = baseHandle;
         _currentEye = currentEye;
         _bounds = bounds;
         _transformContext = transformContext;
+        _drawingContext = drawingContext;
     }
 
-    private Vector2 p1;
-    private Vector2 p2;
-    private Vector2 p3;
-    private Vector2 p4;
-    
-    private DrawVertexUV2D[] UvVertexes = new DrawVertexUV2D[6]; 
-
-    public void DrawLayer(Vector2 position, float Zlevel, Angle rotation, Texture texture, UIBox2? textureRegion = null, Vector2? scale = null)
+    public void DrawLayer(Vector2 position, float zlevel, Angle rotation, Texture texture, UIBox2? textureRegion = null, Vector2? scale = null)
     {
         position += _currentEye.Offset;
 
@@ -175,76 +234,73 @@ public sealed class DrawingHandleSpriteStacking
             textureRegion = atlasTexture.SubRegion;
             texture = atlasTexture.SourceTexture;
         }
-        
-        var sr = textureRegion ?? UIBox2.FromDimensions(Vector2.Zero, texture.Size);
-        
-        var currScale = scale ?? sr.Size / EyeManager.PixelsPerMeter;
-        
-        p1 = position; //LeftTop
-        p3 = position + currScale; //RightBottom
 
-        p2 = new Vector2(p1.X, p3.Y);//LeftBottom
-        p4 = new Vector2(p3.X, p1.Y);//RightTop
-
-        var center = p1 + currScale / 2f;
+        textureRegion ??= UIBox2.FromDimensions(Vector2.Zero, texture.Size);
         
-        var rotTransEye = Matrix3x2.CreateRotation((float)_currentEye.Rotation);
-        var rotTransEyeNeg = Matrix3x2.CreateRotation(-(float)_currentEye.Rotation);
-        var rotTrans = Matrix3x2.CreateRotation((float)rotation);
+        _drawingContext.currScale = scale ?? textureRegion.Value.Size / EyeManager.PixelsPerMeter;
+        
+        _drawingContext.p1 = position; //LeftTop
+        _drawingContext.p3 = position + _drawingContext.currScale; //RightBottom
 
-        ShiftPoints(-center);
-        TransformPoints(rotTrans);
-        ShiftPoints(center);
+        _drawingContext.p2 = new Vector2(_drawingContext.p1.X, _drawingContext.p3.Y);//LeftBottom
+        _drawingContext.p4 = new Vector2(_drawingContext.p3.X, _drawingContext.p1.Y);//RightTop
+
+        _drawingContext.center = _drawingContext.p1 + _drawingContext.currScale / 2f;
+        
+        _drawingContext.rotTransEye = Matrix3x2.CreateRotation((float)_currentEye.Rotation);
+        Matrix3x2.Invert(_drawingContext.rotTransEye, out _drawingContext.rotTransEyeNeg);
+        _drawingContext.rotTrans = Matrix3x2.CreateRotation((float)rotation);
+        
+        ShiftPoints(-_drawingContext.center);
+        TransformPoints(_drawingContext.rotTrans);
+        ShiftPoints(_drawingContext.center);
         
         ShiftPoints(-_currentEye.Position.Position);
-        TransformPoints(rotTransEye);
+        TransformPoints(_drawingContext.rotTransEye);
         ShiftPoints(_currentEye.Position.Position);
-
-        p1 = _transformContext.Transform(p1, Zlevel, _currentEye);
-        p2 = _transformContext.Transform(p2, Zlevel, _currentEye);
-        p3 = _transformContext.Transform(p3, Zlevel, _currentEye);
-        p4 = _transformContext.Transform(p4, Zlevel, _currentEye);
+      
+        _drawingContext.p1 = _transformContext.Transform(_drawingContext.p1, zlevel, _currentEye);
+        _drawingContext.p2 = _transformContext.Transform(_drawingContext.p2, zlevel, _currentEye);
+        _drawingContext.p3 = _transformContext.Transform(_drawingContext.p3, zlevel, _currentEye);
+        _drawingContext.p4 = _transformContext.Transform(_drawingContext.p4, zlevel, _currentEye);
         
         ShiftPoints(-_currentEye.Position.Position);
-        TransformPoints(rotTransEyeNeg);
+        TransformPoints(_drawingContext.rotTransEyeNeg);
         ShiftPoints(_currentEye.Position.Position);
-        
-        if(!_bounds.Contains(p1) && 
-           !_bounds.Contains(p2) && 
-           !_bounds.Contains(p3) && 
-           !_bounds.Contains(p4)) 
+      
+        if(!_bounds.Contains(_drawingContext.p1) && 
+           !_bounds.Contains(_drawingContext.p2) && 
+           !_bounds.Contains(_drawingContext.p3) && 
+           !_bounds.Contains(_drawingContext.p4)) 
             return;
-            
-        var t1 = sr.TopLeft / texture.Size;
-        var t2 = sr.BottomLeft / texture.Size;
-        var t3 = sr.BottomRight / texture.Size;
-        var t4 = sr.TopRight / texture.Size;
-            
-        UvVertexes[0] = new DrawVertexUV2D(p1, t1);
-        UvVertexes[1] = new DrawVertexUV2D(p2, t2);
-        UvVertexes[2] = new DrawVertexUV2D(p3, t3);
-            
-        UvVertexes[3] = new DrawVertexUV2D(p1, t1);
-        UvVertexes[4] = new DrawVertexUV2D(p3, t3);
-        UvVertexes[5] = new DrawVertexUV2D(p4, t4);
         
-        _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList,texture,UvVertexes); 
+        SetVertex(0, _drawingContext.p1, textureRegion.Value.TopLeft     / texture.Size);
+        SetVertex(1, _drawingContext.p2, textureRegion.Value.BottomLeft  / texture.Size);
+        SetVertex(2, _drawingContext.p3, textureRegion.Value.BottomRight / texture.Size);
+        SetVertex(3, _drawingContext.p4, textureRegion.Value.TopRight    / texture.Size);
+        
+        _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleFan, texture,_drawingContext.UvVertexes); 
     }
-    
+
+    private void SetVertex(int i, Vector2 position, Vector2 uv)
+    {
+        _drawingContext.UvVertexes[i].Position = position;
+        _drawingContext.UvVertexes[i].UV = uv;
+    }
 
     private void TransformPoints(Matrix3x2 matrix)
     {
-        p1 = Vector2.Transform(p1, matrix);
-        p2 = Vector2.Transform(p2, matrix);
-        p3 = Vector2.Transform(p3, matrix);
-        p4 = Vector2.Transform(p4, matrix);
+        _drawingContext.p1 = Vector2.Transform(_drawingContext.p1, matrix);
+        _drawingContext.p2 = Vector2.Transform(_drawingContext.p2, matrix);
+        _drawingContext.p3 = Vector2.Transform(_drawingContext.p3, matrix);
+        _drawingContext.p4 = Vector2.Transform(_drawingContext.p4, matrix);
     }
 
     private void ShiftPoints(Vector2 to)
     {
-        p1 += to;
-        p2 += to;
-        p3 += to;
-        p4 += to;
+        _drawingContext.p1 += to;
+        _drawingContext.p2 += to;
+        _drawingContext.p3 += to;
+        _drawingContext.p4 += to;
     }
 }

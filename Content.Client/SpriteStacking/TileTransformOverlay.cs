@@ -27,6 +27,8 @@ public sealed class TileTransformOverlay : GridOverlay
     
     private readonly TransformSystem _transformSystem;
     private readonly MapSystem _mapSystem;
+    private DrawingSpriteStackingContext _drawingContext = new();
+    
     public TileTransformOverlay()
     {
         IoCManager.InjectDependencies(this);
@@ -49,7 +51,7 @@ public sealed class TileTransformOverlay : GridOverlay
         var bounds = args.WorldAABB.Enlarged(5f);
         
         using var draw = _profManager.Group("TileDrawStack");
-        var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, SpriteStackingOverlay.TransformContext);
+        var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, SpriteStackingOverlay.TransformContext, _drawingContext);
         
         DrawGrid(handle, args);
     }
