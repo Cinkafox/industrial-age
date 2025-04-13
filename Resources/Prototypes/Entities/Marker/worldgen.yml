@@ -1,0 +1,5 @@
+- type: entity
+  id: WorldGenStructure
+  components:
+    - type: WorldStructure
+      structurePath: "/Structures/test.yml"

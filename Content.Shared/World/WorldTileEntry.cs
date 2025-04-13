@@ -13,9 +13,11 @@ public sealed class WorldTileEntry(float height, Robust.Shared.Map.Tile tile, Pr
     public Robust.Shared.Map.Tile Tile { get; set; } = tile;
     public HashSet<EntitySpawnContext> Entities { get; } = [];
 
-    public void AddEntity(EntProtoId entId, Angle rotation = new Angle(), Vector2 shift = new Vector2())
+    public EntitySpawnContext AddEntity(EntProtoId entId, Angle rotation = new Angle(), Vector2 shift = new Vector2())
     {
-        Entities.Add(new EntitySpawnContext(entId, rotation, shift));
+        var entry = new EntitySpawnContext(entId, rotation, shift);
+        Entities.Add(entry);
+        return entry;
     }
 }
 

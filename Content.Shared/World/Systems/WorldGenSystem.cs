@@ -1,18 +1,11 @@
-using System.Linq;
 using System.Numerics;
 using Content.Shared.GameTicking;
-using Content.Shared.StateManipulation;
-using Content.Shared.Tile;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Network;
-using Robust.Shared.Noise;
-using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
-using Robust.Shared.Timing;
 
-namespace Content.Shared.World;
+namespace Content.Shared.World.Systems;
 
 public sealed class WorldGenSystem : EntitySystem
 {
@@ -46,6 +39,7 @@ public sealed class WorldGenSystem : EntitySystem
         {
             var realPos = localPos + args.ChunkPos * WorldChunk.ChunkSize;
             _mapSystem.SetTile(ent, realPos, entry.Tile);
+            
             foreach (var entity in entry.Entities)
             {
                 var uid = Spawn(entity.Entity);
@@ -96,7 +90,7 @@ public sealed class WorldGenSystem : EntitySystem
                 chunk.Entries[x * WorldChunk.ChunkSize + y] = GetEntry(ent,pos * WorldChunk.ChunkSize + new Vector2i(x, y));
             }
         }
-        
+        RaiseLocalEvent(ent, new ChunkLoadingEvent(pos, chunk));
         ent.Comp.LoadedChunks.Add(pos, chunk);
         
         RaiseLocalEvent(ent, new ChunkCreatedEvent(pos, chunk));
@@ -105,8 +99,8 @@ public sealed class WorldGenSystem : EntitySystem
     
     private WorldTileEntry GetEntry(Entity<WorldGenComponent> ent, Vector2i pos)
     {
-        var height = GetNoise(ent, pos);
-        var tileProto = GetTile(ent, height);
+        var height = ent.Comp.WorldGenData.GetNoise(pos);
+        var tileProto = ent.Comp.WorldGenData.GetTile(height);
        
         if(!_tileDefinitionManager.TryGetDefinition(tileProto, out var definition)) 
             return new WorldTileEntry(height, new Robust.Shared.Map.Tile(0), tileProto);
@@ -124,46 +118,10 @@ public sealed class WorldGenSystem : EntitySystem
         
         return entry;
     }
-
-
-    private float GetNoise(Entity<WorldGenComponent> ent, Vector2i pos)
-    {
-        var comp = ent.Comp;
-        var sum = 0f;
-        var amplitudeSum = 0f;
-        
-        foreach (var amplitude in comp.WorldGenData!.NoiseWorld)
-        {
-            sum += amplitude.Noise.GetNoise(pos.X, pos.Y) * amplitude.Amplitude;
-            amplitudeSum += amplitude.Amplitude;
-        }
-        
-        sum = sum / amplitudeSum;
-
-        return float.Pow(sum, comp.WorldGenData.Redistribution);
-    }
-
-    private ProtoId<ContentTileDefinition> GetTile(Entity<WorldGenComponent> ent, float height)
-    {
-        var tileElevation = ent.Comp.WorldGenData!.TileElevation;
-        var heights = tileElevation.Keys.ToList();
-
-        var first = 0f;
-        var second = 0f;
-
-        for (int i = 0; i < heights.Count-1; i++)
-        {
-            first = heights[i];
-            second = heights[i + 1];
-            if (height > first && height <= second) return tileElevation[first];
-        }
-        
-        if(height > second) 
-            return tileElevation[second];
-
-        return ent.Comp.WorldGenData!.DefaultTile;
-    }
+    
 }
+
+public record struct ChunkLoadingEvent(Vector2i ChunkPos, WorldChunk Chunk);
 
 public record struct ChunkCreatedEvent(Vector2i ChunkPos, WorldChunk Chunk);
 
