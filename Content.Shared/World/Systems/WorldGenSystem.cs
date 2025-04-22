@@ -38,6 +38,7 @@ public sealed class WorldGenSystem : EntitySystem
         foreach (var (localPos, entry) in args.Chunk.GetEntries())
         {
             var realPos = localPos + args.ChunkPos * WorldChunk.ChunkSize;
+            if(_mapSystem.TryGetTile(ent, realPos, out var tile) && tile.TypeId != 0) continue;
             _mapSystem.SetTile(ent, realPos, entry.Tile);
             
             foreach (var entity in entry.Entities)
