@@ -38,7 +38,6 @@ public sealed class TileTransformOverlay : GridOverlay
     }
     
     private readonly Dictionary<int, UIBox2[]> _tileRegions = new();
-    private Texture? _tileTextureAtlas;
     
     protected override bool BeforeDraw(in OverlayDrawArgs args)
     {
@@ -84,17 +83,18 @@ public sealed class TileTransformOverlay : GridOverlay
             
             handle.DrawLayer(new Vector2(tileDef.X,tileDef.Y),
                 0,
-                _transformSystem.GetWorldRotation(Grid),
-                _tileTextureAtlas!, 
+                _transformSystem.GetWorldRotation(Grid), 
                 regionMaybe);
         }
+        
+        handle.Flush();
     }
     
     internal void _genTextureAtlas()
     {
         _tileRegions.Clear();
-        _tileTextureAtlas = null;
-
+        _drawingContext.Texture = null!;
+        
         var defList = _tileDefinitionManager.Where(t => t.Sprite != null).ToList();
 
         // If there are no tile definitions, we do nothing.
@@ -163,6 +163,6 @@ public sealed class TileTransformOverlay : GridOverlay
             _tileRegions.Add(def.TileId, regionList);
         }
 
-        _tileTextureAtlas = Texture.LoadFromImage(sheet, "Tile Atlas");
+        _drawingContext.Texture = Texture.LoadFromImage(sheet, "Tile Atlas");
     }
 }

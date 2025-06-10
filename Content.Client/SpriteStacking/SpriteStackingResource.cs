@@ -1,12 +1,10 @@
-using System.IO;
-using System.Numerics;
-using System.Text.Json;
-using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
 using Robust.Shared.ContentPack;
 using Robust.Shared.Serialization.Manager;
 using Robust.Shared.Serialization.Markdown;
 using Robust.Shared.Utility;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using YamlDotNet.RepresentationModel;
 
 namespace Content.Client.SpriteStacking;
@@ -48,7 +46,7 @@ public sealed partial class SpriteStackingMetadata
 public sealed class SpriteStackingData
 {
     public SpriteStackingMetadata Metadata { get; }
-    public Dictionary<string, Texture> States = new();
+    public Dictionary<string, Image<Rgba32>> States = new();
     
     public SpriteStackingData(SpriteStackingMetadata metadata)
     {
@@ -85,7 +83,7 @@ public sealed class SpriteStackingResource : BaseResource
                 continue;
             }
 
-            Data.States[state] = textureResource.Texture;
+            Data.States[state] = Image.Load<Rgba32>(_currentContext._resMan.ContentFileRead(path));
         }
         //TODO: Make some atlas think for optimisation purpose
     }

@@ -11,7 +11,8 @@ public static class AutoDependencyRegister
     
     public static void Register()
     {
-        foreach (var implementation in GetEnumerator<DependencyRegisterAttribute>())
+        var enumerator = IoCManager.Resolve<IReflectionManager>().FindTypesWithAttribute<DependencyRegisterAttribute>();;
+        foreach (var implementation in enumerator)
         {
             var attribute = (DependencyRegisterAttribute) 
                 Attribute.GetCustomAttribute(implementation, typeof(DependencyRegisterAttribute))!;
@@ -50,11 +51,6 @@ public static class AutoDependencyRegister
             
             instance.Initialize();
         }
-    }
-
-    private static IEnumerable<Type> GetEnumerator<T>() where T : Attribute
-    {
-        return IoCManager.Resolve<IReflectionManager>().FindTypesWithAttribute<T>();
     }
 
     private static bool HasAttribute<T>(Type implementation)
