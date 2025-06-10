@@ -14,8 +14,6 @@ public sealed class WorldStructureSystem : EntitySystem
 {
     [Dependency] private readonly SharedMapSystem _mapSystem = default!;
     [Dependency] private readonly MapLoaderSystem _mapLoaderSystem = default!;
-    [Dependency] private readonly IResourceManager _resourceManager = default!;
-    [Dependency] private readonly IDependencyCollection _dependency = default!;
     [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
     
     public override void Initialize()
