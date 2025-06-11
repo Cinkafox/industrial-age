@@ -1,11 +1,9 @@
-using System.Collections.ObjectModel;
 using System.Numerics;
 using Content.Shared.ContentVariables;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
 using Robust.Shared.Configuration;
-using Robust.Shared.ContentPack;
 using Robust.Shared.Enums;
 using Robust.Shared.Graphics;
 using Robust.Shared.Profiling;
@@ -14,7 +12,6 @@ namespace Content.Client.SpriteStacking;
 
 public sealed class SpriteStackingOverlay : Overlay
 {
-   
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IConfigurationManager _configurationManager = default!;
     [Dependency] private readonly ProfManager _profManager = default!;
@@ -23,9 +20,7 @@ public sealed class SpriteStackingOverlay : Overlay
     private readonly TransformSystem _transformSystem;
     private readonly SpriteStackingTextureContainer _container;
     
-    private int _stackByOneLayer = 1;
-    
-    public override OverlaySpace Space => OverlaySpace.ScreenSpace | OverlaySpace.WorldSpaceBelowFOV;
+    public override OverlaySpace Space => OverlaySpace.ScreenSpace | OverlaySpace.WorldSpaceEntities;
     public static readonly ITransformContext TransformContext = new ShittyTransformContext();
     
     private DrawingSpriteStackingContext _drawingContext = new();
@@ -45,7 +40,7 @@ public sealed class SpriteStackingOverlay : Overlay
 
     private void OnStackLayerChanged(int stackByOneLayer)
     {
-        _stackByOneLayer = stackByOneLayer;
+        _drawingContext.LayerPerZ = stackByOneLayer;
     }
 
     protected override bool BeforeDraw(in OverlayDrawArgs args)
@@ -55,15 +50,9 @@ public sealed class SpriteStackingOverlay : Overlay
 
     protected override void Draw(in OverlayDrawArgs args)
     {
-        if (args.Space != OverlaySpace.WorldSpaceBelowFOV)
+        if (args.Space == OverlaySpace.ScreenSpace)
         {
-            return; //Debug think
-            args.ScreenHandle.DrawString(_font, new Vector2(0,0), $"Total: {_drawingContext.TotalLength}", Color.White);
-            for (int i = 0; i < _drawingContext.LayerLengths.Length; i++)
-            {
-                args.ScreenHandle.DrawString(_font, new Vector2(0,20 + i * 20), $"{i}: {_drawingContext.LayerLengths[i]}", Color.White);
-            }
-            
+            args.ScreenHandle.DrawString(_font, new Vector2(40,40), $"Total: {_drawingContext.TotalLength}", Color.White);
             return;
         }
         
@@ -144,14 +133,15 @@ public sealed class DrawingSpriteStackingContext
 {
     public DrawVertexUV2D[] ProcessingVertices = new DrawVertexUV2D[4];
     
-    public static readonly int LayerBufferLength = 1024;
-    public static readonly int LayerMaxZIndex = 32;
+    public static readonly int LayerBufferLength = 1024*2;
+    public static readonly int LayerMaxZIndex = 48;
 
     private readonly DrawVertexUV2D[] _layers = new DrawVertexUV2D[LayerMaxZIndex*LayerBufferLength];
     private readonly int[] _layerLengths = new int[LayerMaxZIndex];
     private int _totalLength = 0;
     
-    public readonly int[] LayerLengths = new int[LayerMaxZIndex];
+    private DrawVertexUV2D[]? _pooledArray;
+    
     public int TotalLength = 0;
 
     public Texture Texture = default!;
@@ -163,10 +153,7 @@ public sealed class DrawingSpriteStackingContext
     public Vector2 currScale;
     public Vector2 center;
 
-    public DrawingSpriteStackingContext()
-    {
-        
-    }
+    public int LayerPerZ = 1;
 
     public void PushVertex(int zLevel, DrawVertexUV2D uv)
     {
@@ -188,10 +175,8 @@ public sealed class DrawingSpriteStackingContext
 
     public void Clear()
     {
-        
         for (var i = 0; i < _layerLengths.Length; i++)
         {
-            LayerLengths[i] = _layerLengths[i];
             _layerLengths[i] = 0;
         }
 
@@ -201,22 +186,22 @@ public sealed class DrawingSpriteStackingContext
 
     public DrawVertexUV2D[] BuildVertices()
     {
-        var total = new DrawVertexUV2D[_totalLength];
+        if (_pooledArray == null || _pooledArray.Length != _totalLength)
+            _pooledArray = new DrawVertexUV2D[_totalLength];
+        
         var totalShift = 0;
         
         for (var layer = 0; layer < _layerLengths.Length; layer++)
         {
             for (var vertexIndex = 0; vertexIndex < _layerLengths[layer]; vertexIndex++)
             {
-                total[totalShift] = _layers[vertexIndex + layer * LayerBufferLength];
+                _pooledArray[totalShift] = _layers[vertexIndex + layer * LayerBufferLength];
                 totalShift++;
             }
         }
         
-        return total;
+        return _pooledArray;
     }
-    
-    
 }
 
 public sealed class DrawingHandleSpriteStacking
@@ -245,6 +230,22 @@ public sealed class DrawingHandleSpriteStacking
 
     public void DrawLayer(Vector2 position, int zlevel, Angle rotation, UIBox2 textureRegion , Vector2? scale = null)
     {
+        if (_drawingContext.LayerPerZ == 1)
+        {
+            _drawLayer(position, zlevel,0 , rotation, textureRegion, scale);
+            return;
+        }
+
+        var drawTranslate = 1f / _drawingContext.LayerPerZ;
+
+        for (var i = 0; i < _drawingContext.LayerPerZ; i++)
+        {
+            _drawLayer(position, zlevel, i * drawTranslate, rotation, textureRegion, scale);
+        }
+    }
+
+    private void _drawLayer(Vector2 position, int zlevel, float translateZ, Angle rotation, UIBox2 textureRegion , Vector2? scale = null)
+    {
         position += _currentEye.Offset;
         
         _drawingContext.currScale = scale ?? textureRegion.Size / EyeManager.PixelsPerMeter;
@@ -262,10 +263,10 @@ public sealed class DrawingHandleSpriteStacking
         
         TransformPoints(_drawingContext.rotTrans * _drawingContext.rotTransEye);
       
-        _drawingContext.ProcessingVertices[0].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[0].Position, zlevel, _currentEye);
-        _drawingContext.ProcessingVertices[1].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[1].Position, zlevel, _currentEye);
-        _drawingContext.ProcessingVertices[2].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[2].Position, zlevel, _currentEye);
-        _drawingContext.ProcessingVertices[3].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[3].Position, zlevel, _currentEye);
+        _drawingContext.ProcessingVertices[0].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[0].Position, zlevel + translateZ, _currentEye);
+        _drawingContext.ProcessingVertices[1].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[1].Position, zlevel + translateZ, _currentEye);
+        _drawingContext.ProcessingVertices[2].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[2].Position, zlevel + translateZ, _currentEye);
+        _drawingContext.ProcessingVertices[3].Position = _transformContext.Transform(_drawingContext.ProcessingVertices[3].Position, zlevel + translateZ, _currentEye);
         
         TransformPoints(_drawingContext.rotTransEyeNeg);
       

@@ -1,14 +1,12 @@
 using Content.Shared.ContentVariables;
 using Robust.Client;
 using Robust.Client.GameObjects;
-using Robust.Client.GameStates;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
 using Robust.Client.Utility;
 using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
-using Serilog;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -37,8 +35,8 @@ public sealed class SpriteStackingSystem : EntitySystem
         }
         catch(Exception e)
         {
-            Logger.Error(e.Message);
-            Logger.Error(e.StackTrace ?? "?");
+            Log.Error(e.Message);
+            Log.Error(e.StackTrace ?? "?");
             _gameController.Shutdown();
         }
         
@@ -114,7 +112,7 @@ public sealed class SpriteStackingTextureContainer
     public void RebuildAtlasTexture()
     {
         StackManifest.Clear();
-        var rawImage = new Image<Rgba32>(1024, 1024);
+        var rawImage = new Image<Rgba32>(1024*5, 1024*2);
         
         var widthShift = 0;
         var heightShift = 0;
@@ -139,11 +137,8 @@ public sealed class SpriteStackingTextureContainer
             if(!_resourceCache.TryGetResource<SpriteStackingResource>(currPath, out var spriteStackingResource))
                 continue;
             
-         
-            Logger.Info($"Processing {entProto.ID}");
             if (!StackManifest.TryGetValue(currPath, out var state))
             {
-                Logger.Info($"Sprite stacking component {currPath} not found!");
                 state = new SpriteStackingContainerEntry(
                     new Dictionary<string, Vector2i>(), 
                     spriteStackingResource.Data.Metadata.Height, 
@@ -157,7 +152,6 @@ public sealed class SpriteStackingTextureContainer
                 var stateBox = new UIBox2i(0,0, stateTexture.Width, stateTexture.Height);
                 var boxTranslated = new Vector2i(widthShift, heightShift);
                 
-                Logger.Debug($"BLIT {stateBox} {boxTranslated}");
                 stateTexture.Blit(stateBox, rawImage, boxTranslated);
                 
                 state.States.Add(stateName, boxTranslated);
@@ -171,4 +165,3 @@ public sealed class SpriteStackingTextureContainer
 }
 
 public record struct SpriteStackingContainerEntry(Dictionary<string, Vector2i> States, int ZLevels, Vector2i Size);
-public record struct SpriteStackingEntryStateBox(Vector2i Translate, Vector2i Size);
