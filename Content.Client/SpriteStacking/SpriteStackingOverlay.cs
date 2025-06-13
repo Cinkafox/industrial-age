@@ -52,7 +52,7 @@ public sealed class SpriteStackingOverlay : Overlay
     {
         if (args.Space == OverlaySpace.ScreenSpace)
         {
-            args.ScreenHandle.DrawString(_font, new Vector2(40,40), $"Total: {_drawingContext.TotalLength}", Color.White);
+            args.ScreenHandle.DrawString(_font, new Vector2(40,160), $"Total: {_drawingContext.TotalLength}", Color.White);
             return;
         }
         
@@ -62,7 +62,7 @@ public sealed class SpriteStackingOverlay : Overlay
         var bounds = args.WorldAABB.Enlarged(5f);
 
         using var draw = _profManager.Group("SpriteStackDraw");
-        var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, TransformContext, _drawingContext);
+        using var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, TransformContext, _drawingContext);
         
         DrawEntities(eye, handle, bounds);
     }
@@ -82,20 +82,17 @@ public sealed class SpriteStackingOverlay : Overlay
             if(!bounds.Contains(drawPos))
                 continue;
 
-            var data = _container.StackManifest[stackSpriteComponent.Path];
+            var (vector2Is, zLevels, size) = _container.StackManifest[stackSpriteComponent.Path];
+
+            var translatedPos = vector2Is[stackSpriteComponent.State];
             
-            var size = data.Size;
-            var translatedPos = data.States[stackSpriteComponent.State];
-            
-            for (var i = 0; i < data.ZLevels; i++)
+            for (var i = 0; i < zLevels; i++)
             {
                 var sr = UIBox2i.FromDimensions(translatedPos + new Vector2i(0, size.Y * i), size);
                 
                 handle.DrawLayer(drawPos, i, transformComponent.WorldRotation, sr);
             }
         }
-        
-        handle.Flush();
     }
 }
 
@@ -133,7 +130,7 @@ public sealed class DrawingSpriteStackingContext
 {
     public DrawVertexUV2D[] ProcessingVertices = new DrawVertexUV2D[4];
     
-    public static readonly int LayerBufferLength = 1024*2;
+    public static readonly int LayerBufferLength = 1024*4;
     public static readonly int LayerMaxZIndex = 48;
 
     private readonly DrawVertexUV2D[] _layers = new DrawVertexUV2D[LayerMaxZIndex*LayerBufferLength];
@@ -204,7 +201,7 @@ public sealed class DrawingSpriteStackingContext
     }
 }
 
-public sealed class DrawingHandleSpriteStacking
+public sealed class DrawingHandleSpriteStacking: IDisposable
 {
     private DrawingHandleBase _baseHandle;
     private IEye _currentEye;
@@ -296,5 +293,10 @@ public sealed class DrawingHandleSpriteStacking
     {
         _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, _drawingContext.Texture,_drawingContext.BuildVertices()); 
         _drawingContext.Clear();
+    }
+
+    public void Dispose()
+    {
+        Flush();
     }
 }

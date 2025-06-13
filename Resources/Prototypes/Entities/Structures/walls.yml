@@ -137,6 +137,7 @@
     - type: Icon
       sprite: Structures/grass.rsi
       state: grass
+    - type: SpriteStacking
       
 - type: entity
   parent: BaseWall
@@ -151,3 +152,4 @@
     - type: Icon
       sprite: Structures/tree.rsi
       state: tree
+    - type: SpriteStacking

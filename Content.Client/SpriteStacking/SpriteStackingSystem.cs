@@ -1,3 +1,4 @@
+using System.IO;
 using Content.Shared.ContentVariables;
 using Robust.Client;
 using Robust.Client.GameObjects;
@@ -5,6 +6,7 @@ using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
 using Robust.Client.Utility;
 using Robust.Shared.Configuration;
+using Robust.Shared.ContentPack;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 using SixLabors.ImageSharp;
@@ -100,6 +102,7 @@ public sealed class SpriteStackingTextureContainer
     [Dependency] private readonly IClyde _clyde = default!;
     [Dependency] private readonly IComponentFactory _componentFactory = default!;
     [Dependency] private readonly IResourceCache _resourceCache = default!;
+    [Dependency] private readonly IResourceManager _resourceManager = default!;
     
     public Texture AtlasTexture = default!;
     public readonly Dictionary<ResPath, SpriteStackingContainerEntry> StackManifest = new();
@@ -112,7 +115,7 @@ public sealed class SpriteStackingTextureContainer
     public void RebuildAtlasTexture()
     {
         StackManifest.Clear();
-        var rawImage = new Image<Rgba32>(1024*5, 1024*2);
+        var rawImage = new Image<Rgba32>(1024, 1024);
         
         var widthShift = 0;
         var heightShift = 0;

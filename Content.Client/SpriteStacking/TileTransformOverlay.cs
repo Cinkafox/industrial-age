@@ -50,7 +50,7 @@ public sealed class TileTransformOverlay : GridOverlay
         var bounds = args.WorldAABB.Enlarged(5f);
         
         using var draw = _profManager.Group("TileDrawStack");
-        var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, SpriteStackingOverlay.TransformContext, _drawingContext);
+        using var handle = new DrawingHandleSpriteStacking(args.DrawingHandle, eye, bounds, SpriteStackingOverlay.TransformContext, _drawingContext);
         
         DrawGrid(handle, args);
     }
@@ -86,8 +86,6 @@ public sealed class TileTransformOverlay : GridOverlay
                 _transformSystem.GetWorldRotation(Grid), 
                 regionMaybe);
         }
-        
-        handle.Flush();
     }
     
     internal void _genTextureAtlas()
