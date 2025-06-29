@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Numerics;
 using Content.Shared.ContentVariables;
 using Robust.Client.GameObjects;
@@ -128,16 +129,17 @@ public sealed class ShittyTransformContext : ITransformContext
 
 public sealed class DrawingSpriteStackingContext
 {
-    public DrawVertexUV2D[] ProcessingVertices = new DrawVertexUV2D[4];
+    public DrawVertexUV2DColor[] ProcessingVertices = new DrawVertexUV2DColor[4];
     
-    public static readonly int LayerBufferLength = 1024*4;
-    public static readonly int LayerMaxZIndex = 48;
+    public static readonly int LayerBufferLength = 1024*128;
+    public static readonly int LayerMaxZIndex = 64;
 
-    private readonly DrawVertexUV2D[] _layers = new DrawVertexUV2D[LayerMaxZIndex*LayerBufferLength];
+    private readonly DrawVertexUV2DColor[] _layers = new DrawVertexUV2DColor[LayerMaxZIndex*LayerBufferLength];
     private readonly int[] _layerLengths = new int[LayerMaxZIndex];
-    private int _totalLength = 0;
     
-    private DrawVertexUV2D[]? _pooledArray;
+    private int _totalLength = 0;
+
+    private LayerEnumerator _currentEnumerator;
     
     public int TotalLength = 0;
 
@@ -152,7 +154,16 @@ public sealed class DrawingSpriteStackingContext
 
     public int LayerPerZ = 1;
 
-    public void PushVertex(int zLevel, DrawVertexUV2D uv)
+    public DrawingSpriteStackingContext()
+    {
+        _currentEnumerator = new(this);
+        for (var i = 0; i < ProcessingVertices.Length; i++)
+        {
+            ProcessingVertices[i].Color = Color.White;
+        }
+    }
+
+    public void PushVertex(int zLevel, DrawVertexUV2DColor uv)
     {
         _layers[_layerLengths[zLevel] + LayerBufferLength * zLevel] = uv;
         _layerLengths[zLevel] += 1;
@@ -181,23 +192,63 @@ public sealed class DrawingSpriteStackingContext
         _totalLength = 0;
     }
 
-    public DrawVertexUV2D[] BuildVertices()
+    public LayerEnumerator GetEnumerator()
     {
-        if (_pooledArray == null || _pooledArray.Length != _totalLength)
-            _pooledArray = new DrawVertexUV2D[_totalLength];
-        
-        var totalShift = 0;
-        
-        for (var layer = 0; layer < _layerLengths.Length; layer++)
+        _currentEnumerator.Reset();
+        return _currentEnumerator;
+    }
+    
+    public sealed class LayerEnumerator : IEnumerator<DrawVertexUV2DColor[]>
+    {
+        private readonly DrawingSpriteStackingContext _context;
+    
+        public LayerEnumerator(DrawingSpriteStackingContext context)
         {
-            for (var vertexIndex = 0; vertexIndex < _layerLengths[layer]; vertexIndex++)
-            {
-                _pooledArray[totalShift] = _layers[vertexIndex + layer * LayerBufferLength];
-                totalShift++;
-            }
+            _context = context;
         }
+    
+        private int currentLayer = 0;
+
+        private DrawVertexUV2DColor[] _current = default!;
+
+        public bool MoveNext()
+        {
+            if (_context._layerLengths.Length < currentLayer) return false;
         
-        return _pooledArray;
+            _current = new DrawVertexUV2DColor[_context._layerLengths[currentLayer]];
+        
+            for (var vertexIndex = 0; vertexIndex < _context._layerLengths[currentLayer]; vertexIndex++)
+            {
+                _current[vertexIndex] = _context._layers[vertexIndex + currentLayer * LayerBufferLength];
+            }
+
+            currentLayer++;
+
+            return true;
+        }
+
+        public bool MoveNext(out DrawVertexUV2DColor[]? vertexUv2DColors)
+        {
+            vertexUv2DColors = null;
+            if (!MoveNext()) return false;
+        
+            vertexUv2DColors = _current;
+            return true;
+        }
+
+        public void Reset()
+        {
+            currentLayer = 0;
+        }
+
+        public DrawVertexUV2DColor[] Current => _current;
+
+        object? IEnumerator.Current => _current;
+
+        public void Dispose()
+        {
+        
+        }
     }
 }
 
@@ -291,8 +342,19 @@ public sealed class DrawingHandleSpriteStacking: IDisposable
 
     public void Flush()
     {
-        _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, _drawingContext.Texture,_drawingContext.BuildVertices()); 
-        _drawingContext.Clear();
+        try
+        {
+            using var enumerator = _drawingContext.GetEnumerator();
+            while (enumerator.MoveNext(out var vertexUv2DColors))
+            {
+                _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, _drawingContext.Texture,
+                    vertexUv2DColors);
+            }
+        }
+        finally
+        {
+            _drawingContext.Clear();
+        }
     }
 
     public void Dispose()
