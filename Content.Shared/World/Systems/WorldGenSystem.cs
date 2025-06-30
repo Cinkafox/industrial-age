@@ -30,7 +30,7 @@ public sealed class WorldGenSystem : EntitySystem
 
         var center = (Vector2i)args.NewPosition.Position / 8;
         
-        RegenerateChunks(new Entity<WorldGenComponent>(parent, worldGenComponent),center, 3);
+        RegenerateChunks(new Entity<WorldGenComponent>(parent, worldGenComponent),center, ent.Comp.Radius);
     }
 
     private void OnChunkCreated(Entity<MapGridComponent> ent, ref ChunkCreatedEvent args)
@@ -105,14 +105,14 @@ public sealed class WorldGenSystem : EntitySystem
        
         if(!_tileDefinitionManager.TryGetDefinition(tileProto, out var definition)) 
             return new WorldTileEntry(height, new Robust.Shared.Map.Tile(0), tileProto);
-       
+        
         var tile = _tileDefinitionManager.GetVariantTile(definition, _robustRandom);
 
         var entry = new WorldTileEntry(height, tile, tileProto);
 
         foreach (var addition in ent.Comp.WorldGenData.Additions)
         {
-            addition.Invoke(ent.Comp.WorldGenData, entry, pos, _robustRandom);
+            addition.Invoke(ent.Comp.WorldGenData, entry, pos);
         }
         
         RaiseLocalEvent(ent, new TileEntryLoading(entry, pos));

@@ -21,8 +21,3 @@
         spawnСhance: 0.15
         tileWhitelist:
           - grass
-      - !type:EntWorldGenAddition
-        entity: WorldGenStructure
-        spawnСhance: 0.01
-        tileWhitelist:
-          - grass

@@ -9,7 +9,39 @@ namespace Content.Shared.World;
 [DataDefinition, Serializable, NetSerializable]
 public sealed partial class WorldGenData
 {
-    [DataField] public HashSet<NoiseAmplitude> NoiseWorld = new();
+    [NonSerialized] private int _seed = 1337;
+    [NonSerialized] private HashSet<NoiseAmplitude> _noiseWorld = new();
+    [NonSerialized] private Random _random = new(1337);
+
+    [DataField]
+    public int Seed
+    {
+        get => _seed; 
+        set
+        {
+            _seed = value;
+            _random = new Random(_seed);
+            foreach (var amplitude in NoiseWorld)
+            {
+                amplitude.Noise.SetSeed(_seed);
+            }
+        }
+    }
+    
+    [DataField]
+    public HashSet<NoiseAmplitude> NoiseWorld
+    {
+        get => _noiseWorld;
+        set
+        {
+            _noiseWorld = value;
+            foreach (var amplitude in _noiseWorld)
+            {
+                amplitude.Noise.SetSeed(_seed);
+            }
+        }
+    }
+    
     [DataField] public float Redistribution = 1f;
     [DataField] public Dictionary<float, ProtoId<ContentTileDefinition>> TileElevation = new();
     [DataField] public ProtoId<ContentTileDefinition> DefaultTile;
@@ -50,5 +82,10 @@ public sealed partial class WorldGenData
         sum = sum / amplitudeSum;
 
         return float.Pow(sum, Redistribution);
+    }
+
+    public Random GetRandom()
+    {
+        return _random;
     }
 }
