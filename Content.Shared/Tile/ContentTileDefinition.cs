@@ -8,7 +8,7 @@ namespace Content.Shared.Tile;
 public sealed partial class ContentTileDefinition : IPrototype, ITileDefinition
 {
     [IdDataField] public string ID { get; private set; } = default!;
-    [DataField("sprite",required:true)] public SpriteSpecifier SpriteSpecifier { get; private set; } = default!;
+    [DataField("sprite")] public SpriteSpecifier SpriteSpecifier { get; private set; } = default!;
     [DataField] public int EdgeSpritePriority { get; private set;}
     [DataField] public float Friction { get; private set;}
     [DataField] public byte Variants { get; private set; } = 1;

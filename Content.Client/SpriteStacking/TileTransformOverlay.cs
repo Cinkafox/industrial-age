@@ -73,7 +73,7 @@ public sealed class TileTransformOverlay : GridOverlay
     private void DrawGrid(DrawingHandleSpriteStacking handle,in OverlayDrawArgs args)
     {
         //var tiles = _mapSystem.GetAllTilesEnumerator(Grid, Grid.Comp);
-        var AABB = args.WorldAABB.Enlarged(5f);
+        var AABB = args.WorldAABB.Enlarged(25f);
         var tiles = _mapSystem.GetLocalTilesEnumerator(Grid, Grid.Comp, AABB);
         
         while (tiles.MoveNext(out var tileDef))

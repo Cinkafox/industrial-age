@@ -12,6 +12,7 @@ public sealed partial class InputMoverComponent : Component
     [ViewVariables, AutoNetworkedField] public DirectionFlag WalkDirection = DirectionFlag.None;
     [ViewVariables, AutoNetworkedField] public float Magnitude = 0f;
     [ViewVariables, AutoNetworkedField] public bool IsRunning = false;
+    [ViewVariables, AutoNetworkedField] public float BaseSpeed = 15f;
     [ViewVariables, AutoNetworkedField] public float StaminaCost = 10f;
     [ViewVariables, AutoNetworkedField] public float Speed = 0f;
 }

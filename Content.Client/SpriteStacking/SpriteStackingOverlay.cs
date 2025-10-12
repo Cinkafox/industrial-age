@@ -131,8 +131,8 @@ public sealed class DrawingSpriteStackingContext
 {
     public DrawVertexUV2DColor[] ProcessingVertices = new DrawVertexUV2DColor[4];
     
-    public static readonly int LayerBufferLength = 1024*128;
-    public static readonly int LayerMaxZIndex = 64;
+    public static readonly int LayerBufferLength = 1024*32;
+    public static readonly int LayerMaxZIndex = 48;
 
     private readonly DrawVertexUV2DColor[] _layers = new DrawVertexUV2DColor[LayerMaxZIndex*LayerBufferLength];
     private readonly int[] _layerLengths = new int[LayerMaxZIndex];
@@ -213,7 +213,7 @@ public sealed class DrawingSpriteStackingContext
 
         public bool MoveNext()
         {
-            if (_context._layerLengths.Length < currentLayer) return false;
+            if (_context._layerLengths.Length <= currentLayer) return false;
         
             _current = new DrawVertexUV2DColor[_context._layerLengths[currentLayer]];
         

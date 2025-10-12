@@ -101,7 +101,7 @@ public sealed class InputMoverController : VirtualController
 
             var delta = (transformComponent.LocalRotation - (-eyeAngle + inputMoverComponent.Direction)).Normalise();
 
-            var currSpeed = inputMoverComponent.Magnitude * 4f * speedImpl;
+            var currSpeed = inputMoverComponent.Magnitude * inputMoverComponent.BaseSpeed * speedImpl;
 
             if (currSpeed > inputMoverComponent.Speed) inputMoverComponent.Speed += 10 * frameTime;
             else if (currSpeed < inputMoverComponent.Speed) inputMoverComponent.Speed -= 10 * frameTime;

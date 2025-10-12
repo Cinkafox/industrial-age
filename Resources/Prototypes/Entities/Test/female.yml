@@ -52,7 +52,7 @@
         movement:
           state: stand
     - type: Eye
-      zoom: 0.5,0.5
+      zoom: 2,2
     - type: Fixtures
       fixtures:
         fix1:

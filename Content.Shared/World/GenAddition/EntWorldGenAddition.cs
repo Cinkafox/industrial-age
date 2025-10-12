@@ -1,11 +1,13 @@
+using System.Numerics;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Random;
 
 namespace Content.Shared.World.GenAddition;
 
 public sealed partial class EntWorldGenAddition : IWorldGenAddition
 {
     [DataField] public EntProtoId Entity;
+    [DataField] public Angle Rotation;
+    [DataField] public Vector2 Shift;
     [DataField] public float SpawnСhance = 0.25f;
     [DataField] public HashSet<string> TileWhitelist = new();
     [DataField] public bool NoEntityRequired = true;
@@ -13,10 +15,13 @@ public sealed partial class EntWorldGenAddition : IWorldGenAddition
     {
         if(NoEntityRequired && entry.Entities.Count != 0) 
             return;
-        if(SpawnСhance < data.GetRandom().NextDouble()) 
-            return;
+        
         if(TileWhitelist.Count != 0 && !TileWhitelist.Contains(entry.TileDefinition)) 
             return;
-        entry.AddEntity(Entity);
+        
+        if(SpawnСhance < data.GetRandom().NextDouble()) 
+            return;
+        
+        entry.AddEntity(Entity, Rotation, Shift);
     }
 }

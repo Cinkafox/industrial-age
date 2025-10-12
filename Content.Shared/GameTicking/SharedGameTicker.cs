@@ -1,5 +1,6 @@
 using System.Numerics;
 using Content.Shared.StateManipulation;
+using Content.Shared.World;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
@@ -15,24 +16,15 @@ public abstract partial class SharedGameTicker : EntitySystem
     [Dependency] protected readonly IMapManager MapManager = default!;
     [Dependency] protected readonly SharedMapSystem MapSystem = default!;
     [Dependency] protected readonly ISharedPlayerManager PlayerManager = default!;
-    [Dependency] protected readonly SharedTransformSystem TransformSystem = default!;
     [Dependency] protected readonly SharedPointLightSystem LightSystem = default!;
-    [Dependency] protected readonly IRobustRandom RobustRandom = default!;
     [Dependency] protected readonly IContentStateManager ContentStateManager = default!;
-    [Dependency] protected readonly IPrototypeManager PrototypeManager = default!;
-    [Dependency] protected readonly IGameTiming _gameTiming = default!;
-    [Dependency] protected readonly INetManager _netManager = default!;
+    [Dependency] protected readonly INetManager NetManager = default!;
 
     private bool _isGameInitialized;
-    protected bool _isServer;
+    protected bool IsServer;
     
     public EntityUid MapUid;
     public Entity<MapGridComponent> GridUid;
-    
-    public override void Initialize()
-    {
-        
-    }
 
     public void InitializeGame()
     {
@@ -41,16 +33,10 @@ public abstract partial class SharedGameTicker : EntitySystem
 
         _isGameInitialized = true;
 
-        MapUid = MapSystem.CreateMap(out var mapId);
+        MapUid = MapSystem.CreateMap();
         GridUid = MapManager.CreateGridEntity(MapUid,GridCreateOptions.Default);
-        
+        AddComp<WorldGenComponent>(GridUid);
         RaiseLocalEvent(new GameInitializedEvent(MapUid, GridUid));
-    }
-
-    public void SpawnRotate(EntityUid uid, Angle angle)
-    {
-        var transform = Transform(uid);
-        transform.LocalRotation = angle;
     }
 }
 

@@ -45,10 +45,13 @@ public sealed class EntryPoint : GameShared
     {
         var prototypeList = new List<ContentTileDefinition>();
         
-        _tileDefinitionManager.Register(new VoidTile());
+        var voidDef = _prototypeManager.Index<ContentTileDefinition>("void");
+        _tileDefinitionManager.Register(voidDef);
         
         foreach (var tileDef in _prototypeManager.EnumeratePrototypes<ContentTileDefinition>())
         {
+            if(tileDef.ID == "void") continue;
+            
             tileDef.Sprite = tileDef.SpriteSpecifier switch
             {
                 SpriteSpecifier.Texture texture => texture.TexturePath,
@@ -69,22 +72,5 @@ public sealed class EntryPoint : GameShared
         }
 
         _tileDefinitionManager.Initialize();
-    }
-}
-
-[Prototype("VoidTile")]
-public sealed class VoidTile : ITileDefinition, IPrototype
-{
-    public ushort TileId { get; set; }
-    public string Name { get; } = "Void";
-    [IdDataField] public string ID { get; } = "Void";
-    public ResPath? Sprite { get; }
-    public Dictionary<Direction, ResPath> EdgeSprites { get; } = new();
-    public int EdgeSpritePriority { get; }
-    public float Friction { get; }
-    public byte Variants { get; }
-    public void AssignTileId(ushort id)
-    {
-        TileId = id;
     }
 }

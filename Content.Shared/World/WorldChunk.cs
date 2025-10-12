@@ -8,6 +8,7 @@ public sealed partial class WorldChunk
     public static readonly int ChunkSize = 8;
     
     [DataField] public WorldTileEntry[] Entries = new WorldTileEntry[ChunkSize * ChunkSize];
+    [ViewVariables] public List<NetEntity> LoadedEntities = new();
 
     public WorldTileEntry GetEntry(Vector2i localPosition)
     {

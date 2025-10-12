@@ -9,7 +9,6 @@ namespace Content.Server.Entry;
 
 public sealed class EntryPoint : GameServer
 {
-    
     public override void PreInit()
     {
         IoCManager.BuildGraph();
