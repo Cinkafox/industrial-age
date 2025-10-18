@@ -1,6 +1,7 @@
 using System.Numerics;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared.GameTicking;
 
@@ -10,9 +11,17 @@ public partial class SharedGameTicker
     {
         if (IsServer != NetManager.IsServer) 
             throw new Exception(); //Client tries to add a session for server?
+        
+        SetCar(session, "EntCarGoal");
+    }
 
-        var euid = Spawn("EntMale", new EntityCoordinates(GridUid, Vector2.Zero));
-        var b = LightSystem.EnsureLight( euid);
+    public void SetCar(ICommonSession session, EntProtoId carId)
+    {
+        if (IsServer != NetManager.IsServer) 
+            throw new Exception(); //Client tries to add a session for server?
+
+        var euid = Spawn(carId, new EntityCoordinates(GridUid, Vector2.Zero));
+        var b = LightSystem.EnsureLight(euid);
         LightSystem.SetColor(euid, Color.White, b);
         LightSystem.SetRadius(euid, 48f, b);
         LightSystem.SetEnergy(euid, 0.5f, b);

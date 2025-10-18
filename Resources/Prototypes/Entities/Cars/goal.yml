@@ -1,0 +1,36 @@
+- type: entity
+  name: Female
+  id: EntCarGoal
+  description: GOOOAAAL!!
+  components:
+    - type: Vehicle
+    - type: CameraFollow
+    - type: WorldLoader
+    - type: Sprite
+      sprite: Entities/Cars/goal.rsi
+      layers:
+        - state: car
+      noRot: true
+    - type: SpriteStacking
+    - type: Eye
+      zoom: 1,1
+    - type: Fixtures
+      fixtures:
+        fix1:
+          shape:
+            !type:PhysShapeCircle
+            radius: 0.35
+          density: 50
+          mask:
+            - MobMask
+          layer:
+            - MobLayer
+    - type: Input
+      context: "human"
+    - type: InputMover
+    - type: Physics
+      bodyType: KinematicController
+    - type: LagCompensation
+    - type: Stamina
+    - type: PlayerIndicator
+    - type: Appearance

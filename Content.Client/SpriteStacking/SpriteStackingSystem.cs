@@ -164,6 +164,12 @@ public sealed class SpriteStackingTextureContainer
         }
         
         AtlasTexture = _clyde.LoadTextureFromImage(rawImage, "SpriteStackingAtlas");
+        return;
+        
+        using (var stream = _resourceManager.UserData.OpenWrite(new ResPath("/text.png")))
+        {
+            rawImage.SaveAsPng(stream);
+        }
     }
 }
 

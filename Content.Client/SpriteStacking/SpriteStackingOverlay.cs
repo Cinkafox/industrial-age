@@ -24,7 +24,7 @@ public sealed class SpriteStackingOverlay : Overlay
     public override OverlaySpace Space => OverlaySpace.ScreenSpace | OverlaySpace.WorldSpaceEntities;
     public static readonly ITransformContext TransformContext = new ShittyTransformContext();
     
-    private DrawingSpriteStackingContext _drawingContext = new();
+    private readonly DrawingSpriteStackingContext _drawingContext = new(1024*32, 48);
 
     private Font _font;
 
@@ -130,12 +130,12 @@ public sealed class ShittyTransformContext : ITransformContext
 public sealed class DrawingSpriteStackingContext
 {
     public DrawVertexUV2DColor[] ProcessingVertices = new DrawVertexUV2DColor[4];
-    
-    public static readonly int LayerBufferLength = 1024*32;
-    public static readonly int LayerMaxZIndex = 48;
 
-    private readonly DrawVertexUV2DColor[] _layers = new DrawVertexUV2DColor[LayerMaxZIndex*LayerBufferLength];
-    private readonly int[] _layerLengths = new int[LayerMaxZIndex];
+    private readonly int _layerBufferLength;
+    private readonly int _layerMaxZIndex ;
+
+    private readonly DrawVertexUV2DColor[] _layers;
+    private readonly int[] _layerLengths;
     
     private int _totalLength = 0;
 
@@ -154,8 +154,14 @@ public sealed class DrawingSpriteStackingContext
 
     public int LayerPerZ = 1;
 
-    public DrawingSpriteStackingContext()
+    public DrawingSpriteStackingContext(int layerBufferLength, int layerMaxZIndex)
     {
+        _layerBufferLength = layerBufferLength;
+        _layerMaxZIndex = layerMaxZIndex;
+        
+        _layers = new DrawVertexUV2DColor[_layerMaxZIndex*_layerBufferLength];
+        _layerLengths = new int[_layerMaxZIndex];
+            
         _currentEnumerator = new(this);
         for (var i = 0; i < ProcessingVertices.Length; i++)
         {
@@ -165,7 +171,7 @@ public sealed class DrawingSpriteStackingContext
 
     public void PushVertex(int zLevel, DrawVertexUV2DColor uv)
     {
-        _layers[_layerLengths[zLevel] + LayerBufferLength * zLevel] = uv;
+        _layers[_layerLengths[zLevel] + _layerBufferLength * zLevel] = uv;
         _layerLengths[zLevel] += 1;
         _totalLength += 1;
     }
@@ -219,7 +225,7 @@ public sealed class DrawingSpriteStackingContext
         
             for (var vertexIndex = 0; vertexIndex < _context._layerLengths[currentLayer]; vertexIndex++)
             {
-                _current[vertexIndex] = _context._layers[vertexIndex + currentLayer * LayerBufferLength];
+                _current[vertexIndex] = _context._layers[vertexIndex + currentLayer * _context._layerBufferLength];
             }
 
             currentLayer++;
@@ -324,8 +330,8 @@ public sealed class DrawingHandleSpriteStacking: IDisposable
            !_bounds.Contains(_drawingContext.ProcessingVertices[3].Position)) 
             return;
         
-        _drawingContext.ProcessingVertices[0].UV = textureRegion.TopLeft / _drawingContext.Texture.Size;
-        _drawingContext.ProcessingVertices[1].UV = textureRegion.BottomLeft / _drawingContext.Texture.Size;
+        _drawingContext.ProcessingVertices[0].UV = textureRegion.TopLeft / _drawingContext.Texture.Size + new Vector2(0.0001f,0);
+        _drawingContext.ProcessingVertices[1].UV = textureRegion.BottomLeft / _drawingContext.Texture.Size + new Vector2(0.0001f,0);;;
         _drawingContext.ProcessingVertices[2].UV = textureRegion.BottomRight / _drawingContext.Texture.Size;
         _drawingContext.ProcessingVertices[3].UV = textureRegion.TopRight / _drawingContext.Texture.Size;
         

@@ -10,7 +10,7 @@
   "states":
   [
     {
-      "name": "human",
+      "name": "car",
       "directions": 4
     }
   ]

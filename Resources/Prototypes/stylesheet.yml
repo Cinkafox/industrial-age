@@ -71,4 +71,10 @@
       stylebox: nicePanelPush
     ContainerButton.button#disabled:
       stylebox: nicePanelDisabled
+    .windowCloseButton:
+      texture:
+        isLazy: true
+        valueType: Robust.Client.Graphics.Texture
+        value: "/Textures/Interface/cross.svg.png"
+      modulate-self: "#ffaaaa"
 

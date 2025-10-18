@@ -4,22 +4,20 @@ using Robust.Shared.Player;
 
 namespace Content.Shared.Movement;
 
-public sealed class MoverDirInputCmdHandler : InputCmdHandler
+public sealed class RunInputCmdHandler : InputCmdHandler
 {
     private readonly InputMoverController _controller;
-    private readonly MoveButtons _buttons;
 
-    public MoverDirInputCmdHandler(InputMoverController controller, MoveButtons buttons)
+    public RunInputCmdHandler(InputMoverController controller)
     {
         _controller = controller;
-        _buttons = buttons;
     }
 
     public override bool HandleCmdMessage(IEntityManager entManager, ICommonSession? session, IFullInputCmdMessage message)
     {
         if (session?.AttachedEntity == null) return false;
 
-        _controller.HandleDirChange(session.AttachedEntity.Value, _buttons, message.SubTick, message.State == BoundKeyState.Down);
+        _controller.HandleRunChange(session.AttachedEntity.Value, message.SubTick, message.State == BoundKeyState.Down);
         return false;
     }
 }
