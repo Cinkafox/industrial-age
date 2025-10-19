@@ -9,25 +9,39 @@ public partial class VehicleSystem
         var query = EntityQueryEnumerator<InputMoverComponent,VehicleComponent>();
         while (query.MoveNext(out var inputMoverComponent,out var vehicleComponent))
         {
-            if (inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Up) && !inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Walk))
+            if (inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Nitro))
             {
-                vehicleComponent.Power += vehicleComponent.PowerFactor;
+                if (_indicatorSystem.TrySubtract(vehicleComponent.NitroIndicator, (float)vehicleComponent.Power/10f))
+                    vehicleComponent.AccelerationMul = vehicleComponent.AccelerationFactor;
+                else
+                    vehicleComponent.AccelerationMul = 1;
             }
             else
             {
-                vehicleComponent.Power -= vehicleComponent.PowerFactor;
+                _indicatorSystem.TryAdd(vehicleComponent.NitroIndicator, 5);
+                vehicleComponent.AccelerationMul = 1;
             }
             
-            if (inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Down) && !inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Walk))
+            if (inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Up) && !inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Break))
+            {
+                if(vehicleComponent.Power + vehicleComponent.PowerFactor * vehicleComponent.AccelerationMul < vehicleComponent.MaxPower * vehicleComponent.AccelerationMul)
+                    vehicleComponent.Power += vehicleComponent.PowerFactor * vehicleComponent.AccelerationMul;
+            }
+            else
+            {
+                vehicleComponent.Power -= vehicleComponent.PassiveBreakFactor;
+            }
+            
+            if (inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Down) && !inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Break))
             {
                 vehicleComponent.Reverse += vehicleComponent.ReverseFactor;
             }
             else
             {
-                vehicleComponent.Reverse -= vehicleComponent.ReverseFactor;
+                vehicleComponent.Reverse -= vehicleComponent.PassiveBreakFactor;
             }
 
-            if (inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Walk))
+            if (inputMoverComponent.PushedButtons.HasFlag(MoveButtons.Break))
             {
                 vehicleComponent.Reverse -= vehicleComponent.BreakFactor;
                 vehicleComponent.Power -= vehicleComponent.BreakFactor;
@@ -39,8 +53,8 @@ public partial class VehicleSystem
             }
 
             vehicleComponent.Turn = double.Clamp(vehicleComponent.Turn, 0, vehicleComponent.TurnMax);
-            vehicleComponent.Power = double.Clamp(vehicleComponent.Power, 0, vehicleComponent.MaxPower);
-            vehicleComponent.Reverse = double.Clamp(vehicleComponent.Reverse, 0, vehicleComponent.MaxReverse);
+            vehicleComponent.Power = double.Max(vehicleComponent.Power, 0);
+            vehicleComponent.Reverse = double.Clamp(vehicleComponent.Reverse, 0, vehicleComponent.MaxReverse * vehicleComponent.AccelerationMul);
 
             var direction = vehicleComponent.Power >= vehicleComponent.Reverse ? 1 : -1;
             vehicleComponent.Turn = direction * vehicleComponent.Turn;

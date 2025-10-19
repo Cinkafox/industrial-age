@@ -1,0 +1,7 @@
+- type: entity
+  name: Nitro
+  id: EntIndicatorNitro
+  description: Count of nitro
+  components:
+    - type: IndicatorEntry
+      maxValue: 100

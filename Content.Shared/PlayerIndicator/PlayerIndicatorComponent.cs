@@ -1,11 +1,9 @@
 using Robust.Shared.GameStates;
-using Robust.Shared.Serialization;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Generic;
 
 namespace Content.Shared.PlayerIndicator;
 
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class PlayerIndicatorComponent : Component
 {
-    [DataField, AutoNetworkedField] public List<Enum> Indicators = new();
+    [DataField, AutoNetworkedField] public List<NetEntity> IndicatorEntities = [];
 }

@@ -51,11 +51,6 @@ public sealed partial class IndicatorProgressBar : Control
         MaxValue = 100;
         Value = 50;
     }
-
-    public void UpdateData()
-    {
-        
-    }
     
     private void Resize()
     {

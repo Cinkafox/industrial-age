@@ -3,11 +3,6 @@
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Systems.Indicators.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <BoxContainer Orientation="Horizontal">
-        <SpriteView
-            Margin="5"
-            Name="PlayerRect"
-            Scale="4 4"
-            SetSize="128 128" />
         <BoxContainer
             HorizontalExpand="True"
             Margin="5"

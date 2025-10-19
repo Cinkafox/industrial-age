@@ -1,5 +1,5 @@
 - type: entity
-  name: Female
+  name: GoatMobil
   id: EntCarGoal
   description: GOOOAAAL!!
   components:
@@ -31,6 +31,5 @@
     - type: Physics
       bodyType: KinematicController
     - type: LagCompensation
-    - type: Stamina
     - type: PlayerIndicator
     - type: Appearance

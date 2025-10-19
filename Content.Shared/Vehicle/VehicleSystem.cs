@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Shared.PlayerIndicator;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Events;
 using Robust.Shared.Physics.Systems;
@@ -8,20 +9,23 @@ namespace Content.Shared.Vehicle;
 public sealed partial class VehicleSystem : EntitySystem
 {
     [Dependency] private readonly SharedPhysicsSystem _physicsSystem = default!;
+    [Dependency] private readonly PlayerIndicatorSystem _indicatorSystem = default!;
 
     public override void Initialize()
     {
-        SubscribeLocalEvent<VehicleComponent,StartCollideEvent>(OnCollide);
+        SubscribeLocalEvent<VehicleComponent, StartCollideEvent>(OnCollide);
+        SubscribeLocalEvent<VehicleComponent, ComponentInit>(OnInit);
+    }
+
+    private void OnInit(Entity<VehicleComponent> ent, ref ComponentInit args)
+    {
+        ent.Comp.NitroIndicator = _indicatorSystem.AddIndicator(ent.Owner, "EntIndicatorNitro");
     }
 
     private void OnCollide(Entity<VehicleComponent> ent, ref StartCollideEvent args)
     {
-        var transformComponent = Transform(ent);
-
         var collideDot = - Vector2.Dot(Vector2.Normalize(args.OurBody.LinearVelocity), args.WorldNormal);
         ent.Comp.Drag = double.Max(0, ent.Comp.Drag - collideDot);
-
-        //_physicsSystem.SetLinearVelocity(ent, _physicsSystem.GetMapLinearVelocity(ent)*-1);
     }
 
     public override void Update(float frameTime)

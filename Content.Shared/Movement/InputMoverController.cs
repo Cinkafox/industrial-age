@@ -1,18 +1,13 @@
-using System.Numerics;
-using Content.Shared.Stamina;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
-using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Controllers;
 using Robust.Shared.Serialization;
-using Robust.Shared.Timing;
 
 namespace Content.Shared.Movement;
 
 public sealed class InputMoverController : VirtualController
 {
     private EntityQuery<InputMoverComponent> _inputMoverQuery;
-    [Dependency] private readonly StaminaSystem _staminaSystem = default!;
     
     public override void Initialize()
     {
@@ -24,7 +19,7 @@ public sealed class InputMoverController : VirtualController
             .Bind(EngineKeyFunctions.MoveLeft, new MoverDirInputCmdHandler(this, MoveButtons.Left))
             .Bind(EngineKeyFunctions.MoveRight, new MoverDirInputCmdHandler(this, MoveButtons.Right))
             .Bind(EngineKeyFunctions.MoveDown, new MoverDirInputCmdHandler(this, MoveButtons.Down))
-            .Bind(EngineKeyFunctions.Walk, new RunInputCmdHandler(this))
+            .Bind(EngineKeyFunctions.Walk, new MoverDirInputCmdHandler(this, MoveButtons.Nitro))
             .Register<InputMoverController>();
     }
 
@@ -58,6 +53,7 @@ public enum MoveButtons : byte
     Down = 2,
     Left = 4,
     Right = 8,
-    Walk = 16,
+    Break = 16,
+    Nitro = 32,
     AnyDirection = Up | Down | Left | Right,
 }

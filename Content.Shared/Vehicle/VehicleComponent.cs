@@ -7,8 +7,11 @@ public sealed partial class VehicleComponent : Component
     [DataField] public double MaxPower = 10;
     [DataField] public double MaxReverse = 5;
     [DataField] public double PowerFactor = 0.1;
+    [DataField] public double PassiveBreakFactor = 0.25;
     [DataField] public double ReverseFactor = 0.01;
-    [DataField] public double BreakFactor = 1;
+    [DataField] public double BreakFactor = 2;
+    
+    [DataField] public double AccelerationFactor = 3;
 
     [DataField] public double Drag = 0.95;
     [DataField] public double AngularDrag = 0.95;
@@ -21,5 +24,8 @@ public sealed partial class VehicleComponent : Component
     [ViewVariables] public double Power = 0;
     [ViewVariables] public double Reverse = 0;
     [ViewVariables] public double AngularVelocity = 0;
+    [ViewVariables] public double AccelerationMul = 1;
     public double CurrentSpeed => Power - Reverse;
+
+    [ViewVariables] public EntityUid NitroIndicator;
 }
