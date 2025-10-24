@@ -84,6 +84,12 @@ public sealed partial class WorldGenData
         return float.Pow(sum, Redistribution);
     }
 
+    public ProtoId<ContentTileDefinition> GetTile(Vector2i pos)
+    {
+        var height = GetNoise(pos);
+        return GetTile(height);
+    }
+
     public Random GetRandom()
     {
         return _random;

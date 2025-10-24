@@ -21,7 +21,7 @@ public sealed class SpriteStackingOverlay : Overlay
     private readonly TransformSystem _transformSystem;
     private readonly SpriteStackingTextureContainer _container;
     
-    public override OverlaySpace Space => OverlaySpace.ScreenSpace | OverlaySpace.WorldSpaceEntities;
+    public override OverlaySpace Space => OverlaySpace.WorldSpaceEntities;
     public static readonly ITransformContext TransformContext = new ShittyTransformContext();
     
     private readonly DrawingSpriteStackingContext _drawingContext = new(1024*32, 48);
@@ -51,12 +51,6 @@ public sealed class SpriteStackingOverlay : Overlay
 
     protected override void Draw(in OverlayDrawArgs args)
     {
-        if (args.Space == OverlaySpace.ScreenSpace)
-        {
-            args.ScreenHandle.DrawString(_font, new Vector2(40,160), $"Total: {_drawingContext.TotalLength}", Color.White);
-            return;
-        }
-        
         _drawingContext.Texture = _container.AtlasTexture;
         
         var eye = args.Viewport.Eye!;

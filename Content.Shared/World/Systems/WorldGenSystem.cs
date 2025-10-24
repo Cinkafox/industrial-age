@@ -5,6 +5,7 @@ using Content.Shared.Entry;
 using Content.Shared.GameTicking;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Physics.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -17,6 +18,7 @@ public sealed class WorldGenSystem : EntitySystem
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly ITileDefinitionManager _tileDefinitionManager = default!;
     [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
+    [Dependency] private readonly SharedPhysicsSystem _physicsSystem = default!;
 
     private Robust.Shared.Map.Tile _voidTile = new Robust.Shared.Map.Tile(0);
     
@@ -72,6 +74,8 @@ public sealed class WorldGenSystem : EntitySystem
             _transformSystem.SetParent(uid, ent);
             _transformSystem.SetLocalPosition(uid, pos + entity.Offset + Vector2.One / 2);
             _transformSystem.SetLocalRotation(uid, entity.Rotation);
+            _transformSystem.AnchorEntity(uid);
+            _physicsSystem.SetCanCollide(uid, true);
             args.Chunk.LoadedEntities.Add(GetNetEntity(uid));
         }
     }
@@ -165,7 +169,7 @@ public sealed class WorldGenSystem : EntitySystem
         return GetChunkPosition(_transformSystem.GetWorldPosition(uid));
     }
     
-    private WorldTileEntry GetEntry(Entity<WorldGenComponent> ent, Vector2i pos)
+    internal WorldTileEntry GetEntry(Entity<WorldGenComponent> ent, Vector2i pos)
     {
         var height = ent.Comp.WorldGenData.GetNoise(pos);
         var tileProto = ent.Comp.WorldGenData.GetTile(height);
@@ -182,8 +186,6 @@ public sealed class WorldGenSystem : EntitySystem
             addition.Invoke(ent.Comp.WorldGenData, entry, pos);
         }
         
-        RaiseLocalEvent(ent, new TileEntryLoading(entry, pos));
-        
         return entry;
     }
 
@@ -199,10 +201,7 @@ public sealed class WorldGenSystem : EntitySystem
     
 }
 
-public record struct EntityLoadingBeforeChunkLoadEvent();
 
 public record struct ChunkLoadingEvent(Vector2i ChunkPos, WorldChunk Chunk);
 
 public record struct ChunkCreatedEvent(Vector2i ChunkPos, WorldChunk Chunk);
-
-public record struct TileEntryLoading(WorldTileEntry Entry, Vector2i Pos);

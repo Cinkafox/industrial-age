@@ -7,20 +7,36 @@
           noiseType: Perlin
           frequency: 0.02
     tileElevation: 
-      0: water
+      0: grass
       0.1: sand
-      0.2: grass
+      0.3: grass
     defaultTile: water
     additions: 
       - !type:EntWorldGenAddition
+        entity: Wall
+        conditions:
+          - !type:TileCondition
+            tileWhitelist:
+              - grass  
+          - !type:AdjacentTileRequiredCondition
+            tiles:
+              - sand
+        
+      - !type:EntWorldGenAddition
         entity: Grass
-        spawnСhance: 0.25
         randomAngleMax: 90
-        tileWhitelist:
-          - grass
+        conditions:
+          - !type:TileCondition
+            tileWhitelist:
+              - grass
+          - !type:SpawnProbabilityCondition
+            spawnProbability: 0.25
       - !type:EntWorldGenAddition
         entity: Tree
-        spawnСhance: 0.15
         randomAngleMax: 90
-        tileWhitelist:
-          - grass
+        conditions:
+          - !type:TileCondition
+            tileWhitelist:
+              - grass
+          - !type:SpawnProbabilityCondition
+            spawnProbability: 0.15

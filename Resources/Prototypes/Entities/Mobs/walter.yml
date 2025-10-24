@@ -7,5 +7,6 @@
       sprite: Entities/Mobs/walter.rsi
       layers:
         - state: walter
+      noRot: true
     - type: Eye
       zoom: 0.5,0.5

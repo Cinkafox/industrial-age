@@ -1,6 +1,7 @@
 using System.Numerics;
 using Content.Shared.StateManipulation;
 using Content.Shared.World;
+using Content.Shared.World.Systems;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
@@ -19,6 +20,7 @@ public abstract partial class SharedGameTicker : EntitySystem
     [Dependency] protected readonly SharedPointLightSystem LightSystem = default!;
     [Dependency] protected readonly IContentStateManager ContentStateManager = default!;
     [Dependency] protected readonly INetManager NetManager = default!;
+    [Dependency] protected readonly WorldGenSystem WorldGenSystem = default!;
 
     private bool _isGameInitialized;
     protected bool IsServer;
@@ -36,6 +38,8 @@ public abstract partial class SharedGameTicker : EntitySystem
         MapUid = MapSystem.CreateMap();
         GridUid = MapManager.CreateGridEntity(MapUid,GridCreateOptions.Default);
         AddComp<WorldGenComponent>(GridUid);
+        
+        GridUid.Comp.CanSplit = false;
         RaiseLocalEvent(new GameInitializedEvent(MapUid, GridUid));
     }
 }

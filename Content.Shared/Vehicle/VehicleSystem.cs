@@ -14,10 +14,10 @@ public sealed partial class VehicleSystem : EntitySystem
     public override void Initialize()
     {
         SubscribeLocalEvent<VehicleComponent, StartCollideEvent>(OnCollide);
-        SubscribeLocalEvent<VehicleComponent, ComponentInit>(OnInit);
+        SubscribeLocalEvent<VehicleComponent, ComponentStartup>(OnInit);
     }
 
-    private void OnInit(Entity<VehicleComponent> ent, ref ComponentInit args)
+    private void OnInit(Entity<VehicleComponent> ent, ref ComponentStartup args)
     {
         ent.Comp.NitroIndicator = _indicatorSystem.AddIndicator(ent.Owner, "EntIndicatorNitro");
     }
@@ -25,7 +25,7 @@ public sealed partial class VehicleSystem : EntitySystem
     private void OnCollide(Entity<VehicleComponent> ent, ref StartCollideEvent args)
     {
         var collideDot = - Vector2.Dot(Vector2.Normalize(args.OurBody.LinearVelocity), args.WorldNormal);
-        ent.Comp.Drag = double.Max(0, ent.Comp.Drag - collideDot);
+        ent.Comp.Power = double.Max(0, ent.Comp.Power - collideDot);
     }
 
     public override void Update(float frameTime)

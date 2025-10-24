@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Shared.World.GenAddition.Conditions;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.World.GenAddition;
@@ -9,19 +10,16 @@ public sealed partial class EntWorldGenAddition : IWorldGenAddition
     [DataField] public Angle Rotation;
     [DataField] public Angle RandomAngleMax;
     [DataField] public Vector2 Shift;
-    [DataField] public float SpawnСhance = 0.25f;
-    [DataField] public HashSet<string> TileWhitelist = new();
+    [DataField] public List<IAdditionCondition> Conditions;
+    
     [DataField] public bool NoEntityRequired = true;
     public void Invoke(WorldGenData data, WorldTileEntry entry, Vector2i pos)
     {
-        if(NoEntityRequired && entry.Entities.Count != 0) 
-            return;
-        
-        if(TileWhitelist.Count != 0 && !TileWhitelist.Contains(entry.TileDefinition)) 
-            return;
-        
-        if(SpawnСhance < data.GetRandom().NextDouble()) 
-            return;
+        foreach (var condition in Conditions)
+        {
+            if(!condition.CheckCondition(data, entry, pos))
+                return;
+        }
 
         if (RandomAngleMax != 0)
         {
