@@ -25,6 +25,8 @@ public abstract partial class SharedGameTicker : EntitySystem
     private bool _isGameInitialized;
     protected bool IsServer;
     
+    public const bool MappingMode = true;
+    
     public EntityUid MapUid;
     public Entity<MapGridComponent> GridUid;
 
@@ -34,8 +36,12 @@ public abstract partial class SharedGameTicker : EntitySystem
             throw new Exception();
 
         _isGameInitialized = true;
+        
+        MapUid = MapSystem.CreateMap(!MappingMode);
 
-        MapUid = MapSystem.CreateMap();
+        if (MappingMode)
+            return;
+        
         GridUid = MapManager.CreateGridEntity(MapUid,GridCreateOptions.Default);
         AddComp<WorldGenComponent>(GridUid);
         

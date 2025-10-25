@@ -12,8 +12,29 @@ public partial class SharedGameTicker
     {
         if (IsServer != NetManager.IsServer) 
             throw new Exception(); //Client tries to add a session for server?
+
+        if (MappingMode)
+        {
+            SpawnGhost(session);
+            return;
+        }
         
         SetCar(session, "EntCarGoal");
+    }
+
+    public void SpawnGhost(ICommonSession session)
+    {
+        if (IsServer != NetManager.IsServer) 
+            throw new Exception(); //Client tries to add a session for server?
+        
+        var euid = Spawn("MobWalter", new EntityCoordinates(MapUid, Vector2.Zero));
+        var b = LightSystem.EnsureLight(euid);
+        LightSystem.SetColor(euid, Color.White, b);
+        LightSystem.SetRadius(euid, 48f, b);
+        LightSystem.SetEnergy(euid, 0.5f, b);
+        
+        PlayerManager.SetAttachedEntity(session, euid);
+        ContentStateManager.SetState(session,"Content.Client.Game.GameState");
     }
 
     public void SetCar(ICommonSession session, EntProtoId carId)

@@ -1,12 +1,16 @@
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
+using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Controllers;
+using Robust.Shared.Physics.Systems;
 using Robust.Shared.Serialization;
+using Robust.Shared.Timing;
 
 namespace Content.Shared.Movement;
 
 public sealed class InputMoverController : VirtualController
 {
+    [Dependency] private readonly IGameTiming _gameTiming = default!;
     private EntityQuery<InputMoverComponent> _inputMoverQuery;
     
     public override void Initialize()
@@ -34,13 +38,21 @@ public sealed class InputMoverController : VirtualController
             inputMoverComponent.PushedButtons &= ~buttons;
     }
 
-    public void HandleRunChange(EntityUid sessionAttachedEntity, ushort messageSubTick, bool isRunning)
+    public override void Update(float frameTime)
     {
-        if(!_inputMoverQuery.TryComp(sessionAttachedEntity, out var inputMoverComponent))
-            return;
+        base.Update(frameTime);
         
-        inputMoverComponent.IsRunning = isRunning;
-        Dirty(sessionAttachedEntity, inputMoverComponent);
+        if(!_gameTiming.IsFirstTimePredicted) 
+            return;
+
+        var inputQueryEnumerator = AllEntityQuery<InputMoverComponent, TransformComponent>();
+        while (inputQueryEnumerator.MoveNext(out var uid, out var inputMoverComponent, out var transformComponent))
+        {
+            var dir = inputMoverComponent.PushedButtons.ToDirection();
+           
+            if(dir == DirectionFlag.None || !inputMoverComponent.Enabled) continue;
+            transformComponent.LocalPosition -= dir.AsDir().ToVec()*frameTime*5f;
+        }
     }
 }
 
@@ -49,11 +61,25 @@ public sealed class InputMoverController : VirtualController
 public enum MoveButtons : byte
 {
     None = 0,
+    
     Up = 1,
-    Down = 2,
-    Left = 4,
+    Left = 2,
+    Down = 4,
     Right = 8,
+    
     Break = 16,
     Nitro = 32,
-    AnyDirection = Up | Down | Left | Right,
+}
+
+public static class MoveButtonsExtensions
+{
+    public static DirectionFlag ToDirection(this MoveButtons moveButtons)
+    {
+        if(moveButtons.HasFlag(MoveButtons.Break))
+            moveButtons &= ~MoveButtons.Break;
+        if(moveButtons.HasFlag(MoveButtons.Nitro))
+            moveButtons &= ~MoveButtons.Nitro;
+        
+        return (DirectionFlag)moveButtons;
+    }
 }
