@@ -22,15 +22,18 @@ public partial class SharedGameTicker
             throw new Exception(); //Client tries to add a session for server?
 
         var spawnPos = Vector2i.Zero;
-        var gridWorld = new Entity<WorldGenComponent>(GridUid.Owner, Comp<WorldGenComponent>(GridUid));
+        var worldGenData = Comp<WorldGenComponent>(GridUid).WorldGenData;
 
+        //TODO: Player spawn condition prototype
         for (var x = 0; x < 200; x++)
         {
             spawnPos = SpiralScanner.GetPosition(x);
-            var height = gridWorld.Comp.WorldGenData.GetNoise(spawnPos);
-            var tileProto = gridWorld.Comp.WorldGenData.GetTile(height);
             
-            if(tileProto != "sand") 
+            if(worldGenData.GetTile(spawnPos) != "sand" ||
+               worldGenData.GetTile(spawnPos) + Vector2i.Up != "sand" ||
+               worldGenData.GetTile(spawnPos) + Vector2i.Right != "sand" ||
+               worldGenData.GetTile(spawnPos) + Vector2i.Down != "sand" ||
+               worldGenData.GetTile(spawnPos) + Vector2i.Left != "sand") 
                 continue;
             
             break;
@@ -54,10 +57,10 @@ public static class SpiralScanner
     {
         if (n == 0) return (0, 0);
 
-        int layer = (int)Math.Ceiling((Math.Sqrt(n + 1) - 1) / 2);
-        int legLen = layer * 2;
-        int maxVal = (2 * layer + 1) * (2 * layer + 1) - 1;
-        int diff = maxVal - n;
+        var layer = (int)Math.Ceiling((Math.Sqrt(n + 1) - 1) / 2);
+        var legLen = layer * 2;
+        var maxVal = (2 * layer + 1) * (2 * layer + 1) - 1;
+        var diff = maxVal - n;
 
         int x = 0, y = 0;
 

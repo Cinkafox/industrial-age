@@ -8,6 +8,7 @@ using Robust.Shared.Configuration;
 using Robust.Shared.Enums;
 using Robust.Shared.Graphics;
 using Robust.Shared.Profiling;
+using Robust.Shared.Toolshed.TypeParsers;
 
 namespace Content.Client.SpriteStacking;
 
@@ -26,16 +27,11 @@ public sealed class SpriteStackingOverlay : Overlay
     
     private readonly DrawingSpriteStackingContext _drawingContext = new(1024*32, 48);
 
-    private Font _font;
-
     public SpriteStackingOverlay(SpriteStackingTextureContainer container)
     {
         IoCManager.InjectDependencies(this);
         _configurationManager.OnValueChanged(CCVars.StackByOneLayer,OnStackLayerChanged,true);
         _transformSystem = _entityManager.System<TransformSystem>();
-
-        _font = _resourceCache.GetResource<FontResource>("/Fonts/Ebbe/Ebbe Black.ttf").MakeDefault();
-        
         _container = container;
     }
 
@@ -52,7 +48,7 @@ public sealed class SpriteStackingOverlay : Overlay
     protected override void Draw(in OverlayDrawArgs args)
     {
         _drawingContext.Texture = _container.AtlasTexture;
-        
+
         var eye = args.Viewport.Eye!;
         var bounds = args.WorldAABB.Enlarged(5f);
 
@@ -198,7 +194,7 @@ public sealed class DrawingSpriteStackingContext
         return _currentEnumerator;
     }
     
-    public sealed class LayerEnumerator : IEnumerator<DrawVertexUV2DColor[]>
+    public sealed class LayerEnumerator
     {
         private readonly DrawingSpriteStackingContext _context;
     
@@ -207,47 +203,25 @@ public sealed class DrawingSpriteStackingContext
             _context = context;
         }
     
-        private int currentLayer = 0;
+        private int _currentLayer = 0;
 
-        private DrawVertexUV2DColor[] _current = default!;
-
-        public bool MoveNext()
+        public bool MoveNext(out ReadOnlySpan<DrawVertexUV2DColor> vertexUv2DColors )
         {
-            if (_context._layerLengths.Length <= currentLayer) return false;
-        
-            _current = new DrawVertexUV2DColor[_context._layerLengths[currentLayer]];
-        
-            for (var vertexIndex = 0; vertexIndex < _context._layerLengths[currentLayer]; vertexIndex++)
+            if (_context._layerLengths.Length <= _currentLayer)
             {
-                _current[vertexIndex] = _context._layers[vertexIndex + currentLayer * _context._layerBufferLength];
+                vertexUv2DColors = null;
+                return false;
             }
 
-            currentLayer++;
-
-            return true;
-        }
-
-        public bool MoveNext(out DrawVertexUV2DColor[]? vertexUv2DColors)
-        {
-            vertexUv2DColors = null;
-            if (!MoveNext()) return false;
-        
-            vertexUv2DColors = _current;
+            vertexUv2DColors = _context._layers.AsSpan(_currentLayer * _context._layerBufferLength,
+                _context._layerLengths[_currentLayer]);
+            _currentLayer++;
             return true;
         }
 
         public void Reset()
         {
-            currentLayer = 0;
-        }
-
-        public DrawVertexUV2DColor[] Current => _current;
-
-        object? IEnumerator.Current => _current;
-
-        public void Dispose()
-        {
-        
+            _currentLayer = 0;
         }
     }
 }
@@ -344,8 +318,8 @@ public sealed class DrawingHandleSpriteStacking: IDisposable
     {
         try
         {
-            using var enumerator = _drawingContext.GetEnumerator();
-            while (enumerator.MoveNext(out var vertexUv2DColors))
+            var enumerator = _drawingContext.GetEnumerator();
+            while (enumerator.MoveNext(out ReadOnlySpan<DrawVertexUV2DColor> vertexUv2DColors))
             {
                 _baseHandle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, _drawingContext.Texture,
                     vertexUv2DColors);
