@@ -50,7 +50,7 @@ public sealed class InputMoverController : VirtualController
         {
             var dir = inputMoverComponent.PushedButtons.ToDirection();
            
-            if(dir == DirectionFlag.None || !inputMoverComponent.Enabled) continue;
+            if(dir == DirectionFlag.None || !inputMoverComponent.MovementEnabled) continue;
             transformComponent.LocalPosition -= dir.AsDir().ToVec()*frameTime*5f;
         }
     }

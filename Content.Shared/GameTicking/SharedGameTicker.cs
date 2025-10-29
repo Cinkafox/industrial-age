@@ -25,7 +25,7 @@ public abstract partial class SharedGameTicker : EntitySystem
     private bool _isGameInitialized;
     protected bool IsServer;
     
-    public const bool MappingMode = true;
+    public const bool MappingMode = false;
     
     public EntityUid MapUid;
     public Entity<MapGridComponent> GridUid;

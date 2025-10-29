@@ -28,7 +28,7 @@
     - type: Input
       context: "human"
     - type: InputMover
-      enabled: false
+      movementEnabled: false
     - type: Physics
       bodyType: KinematicController
     - type: LagCompensation

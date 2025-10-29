@@ -15,15 +15,11 @@ namespace Content.Client.Game;
 
 public sealed class GameState : State<ContentGame>
 {
-    [Dependency] private readonly IEyeManager _eyeManager = default!;
     [Dependency] private readonly IInputManager _inputManager = default!;
     [Dependency] private readonly IPlayerManager _playerManager = default!;
     [Dependency] private readonly IEntitySystemManager _entitySystemManager = default!;
-    [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IMapManager _mapManager = default!;
-    [Dependency] private readonly IGameController _gameController = default!;
-    [Dependency] private readonly IBaseClient _baseClient = default!;
     
     protected override void Startup()
     {

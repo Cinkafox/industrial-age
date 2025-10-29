@@ -11,8 +11,8 @@ namespace Content.Client.SpriteStacking;
 
 public sealed partial class SpriteStackingMetadata
 {
-    public readonly Vector2i Size;
     public readonly int Height;
+    public readonly Vector2i Size;
     public readonly string[] States;
 
     public SpriteStackingMetadata(Vector2i size, string[] states, int height)
@@ -25,44 +25,48 @@ public sealed partial class SpriteStackingMetadata
     public static SpriteStackingMetadata ReadStream(YamlDocument document, ISerializationManager serializationManager)
     {
         var manifestRaw =
-            serializationManager.Read<SpriteStackingRawMetadata>(document.RootNode.ToDataNode(), notNullableOverride:true);
+            serializationManager.Read<SpriteStackingRawMetadata>(document.RootNode.ToDataNode(),
+                notNullableOverride: true);
 
         if (manifestRaw is null) throw new Exception("Invalid manifest file!");
         if (manifestRaw.Height < 0) throw new Exception("Invalid height!");
         if (manifestRaw.Size.X <= 1 || manifestRaw.Size.Y <= 1) throw new Exception("Invalid size of sprite!");
 
-        return new SpriteStackingMetadata((Vector2i) manifestRaw.Size, manifestRaw.States, manifestRaw.Height);
+        return new SpriteStackingMetadata(manifestRaw.Size, manifestRaw.States, manifestRaw.Height);
     }
 
-    [Serializable, DataDefinition]
-    sealed partial class SpriteStackingRawMetadata
+    [Serializable]
+    [DataDefinition]
+    private sealed partial class SpriteStackingRawMetadata
     {
-        [DataField] public Vector2i Size;
         [DataField] public int Height;
+        [DataField] public Vector2i Size;
         [DataField] public string[] States = [];
     }
 }
 
 public sealed class SpriteStackingData
 {
-    public SpriteStackingMetadata Metadata { get; }
     public Dictionary<string, Image<Rgba32>> States = new();
-    
+
     public SpriteStackingData(SpriteStackingMetadata metadata)
     {
         Metadata = metadata;
     }
+
+    public SpriteStackingMetadata Metadata { get; }
 }
 
 public sealed class SpriteStackingResource : BaseResource
 {
+    private readonly LoadingContext _currentContext = new();
     public SpriteStackingData Data = default!;
-    private LoadingContext _currentContext = new();
+
     public override void Load(IDependencyCollection dependencies, ResPath path)
     {
         _currentContext.ResolveContext(dependencies);
         _currentContext.Path = path;
-        
+
         StackPreLoad();
     }
 
@@ -71,7 +75,7 @@ public sealed class SpriteStackingResource : BaseResource
         var manifestPath = _currentContext.Path / "meta.yml";
         var manifestFile = _currentContext._resMan.ContentFileReadYaml(manifestPath);
         var metadata = SpriteStackingMetadata.ReadStream(manifestFile.Documents[0], _currentContext._serMan);
-        
+
         Data = new SpriteStackingData(metadata);
 
         foreach (var state in metadata.States)
@@ -87,15 +91,15 @@ public sealed class SpriteStackingResource : BaseResource
         }
         //TODO: Make some atlas think for optimisation purpose
     }
-    
+
     private sealed class LoadingContext
     {
-        public ResPath Path = default!;
-        public IResourceManager _resMan = default!;
         public IResourceCache _resCache = default!;
+        public IResourceManager _resMan = default!;
         public ISerializationManager _serMan = default!;
-        
+
         public ISawmill Logger = default!;
+        public ResPath Path;
 
         public void ResolveContext(IDependencyCollection dependencies)
         {

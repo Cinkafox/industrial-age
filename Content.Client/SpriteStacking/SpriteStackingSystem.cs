@@ -1,4 +1,4 @@
-using System.IO;
+using Content.Client.SpriteStacking.Overlays;
 using Content.Shared.ContentVariables;
 using Robust.Client;
 using Robust.Client.GameObjects;
@@ -16,32 +16,32 @@ namespace Content.Client.SpriteStacking;
 
 public sealed class SpriteStackingSystem : EntitySystem
 {
-    [Dependency] private readonly IOverlayManager _overlayManager = default!;
-    [Dependency] private readonly IResourceCache _resourceCache = default!;
     [Dependency] private readonly IConfigurationManager _configurationManager = default!;
     [Dependency] private readonly IGameController _gameController = default!;
+    [Dependency] private readonly IOverlayManager _overlayManager = default!;
+    [Dependency] private readonly IResourceCache _resourceCache = default!;
 
-    private SpriteStackingTextureContainer _spriteStackingTextureContainer = new();
-    
+    private readonly SpriteStackingTextureContainer _spriteStackingTextureContainer = new();
+
     public override void Initialize()
     {
         _configurationManager.OnValueChanged(CCVars.StackRenderEnabled, OnRenderEnabledChanged, true);
-        
+
         _overlayManager.AddOverlay(new SpriteStackingOverlay(_spriteStackingTextureContainer));
         _overlayManager.AddOverlay(new TileTransformOverlay());
         _overlayManager.AddOverlay(new EntTransformOverlay());
-        
+
         try
         {
             _spriteStackingTextureContainer.RebuildAtlasTexture();
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Log.Error(e.Message);
             Log.Error(e.StackTrace ?? "?");
             _gameController.Shutdown();
         }
-        
+
         SubscribeLocalEvent<SpriteStackingComponent, ComponentInit>(OnInit);
     }
 
@@ -50,10 +50,7 @@ public sealed class SpriteStackingSystem : EntitySystem
         if (!obj)
         {
             var query = EntityQueryEnumerator<SpriteComponent>();
-            while (query.MoveNext(out var spriteComponent))
-            {
-                spriteComponent.Visible = true;
-            }
+            while (query.MoveNext(out var spriteComponent)) spriteComponent.Visible = true;
         }
     }
 
@@ -67,7 +64,7 @@ public sealed class SpriteStackingSystem : EntitySystem
                 RemComp<SpriteStackingComponent>(ent);
                 return;
             }
-            
+
             ent.Comp.Path = spriteComponent.BaseRSI.Path;
             ent.Comp.State = spriteComponent.LayerGetState(0).Name!;
             ent.Comp.UpdateStateOnSpriteChange = true;
@@ -77,7 +74,6 @@ public sealed class SpriteStackingSystem : EntitySystem
         {
             Log.Error("Path not found!");
             RemComp<SpriteStackingComponent>(ent);
-            return;
         }
     }
 
@@ -89,83 +85,86 @@ public sealed class SpriteStackingSystem : EntitySystem
             var state = spriteComponent.LayerGetState(0).Name;
             if (spriteStackingComponent.UpdateStateOnSpriteChange &&
                 state != spriteStackingComponent.State && state != null)
-            {
                 spriteStackingComponent.State = state;
-            }
         }
     }
 }
 
-public sealed class SpriteStackingTextureContainer
+public interface ITextureContainer
 {
-    [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
+    public Texture AtlasTexture { get; }
+}
+
+public sealed class SpriteStackingTextureContainer: ITextureContainer
+{
     [Dependency] private readonly IClyde _clyde = default!;
     [Dependency] private readonly IComponentFactory _componentFactory = default!;
+    [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly IResourceCache _resourceCache = default!;
     [Dependency] private readonly IResourceManager _resourceManager = default!;
-    
-    public Texture AtlasTexture = default!;
     public readonly Dictionary<ResPath, SpriteStackingContainerEntry> StackManifest = new();
+
+    public Texture AtlasTexture { get; private set; } = default!;
 
     public SpriteStackingTextureContainer()
     {
         IoCManager.InjectDependencies(this);
     }
-    
+
     public void RebuildAtlasTexture()
     {
         StackManifest.Clear();
         var rawImage = new Image<Rgba32>(1024, 1024);
-        
+
         var widthShift = 0;
         var heightShift = 0;
         var heightMax = 0;
-        
+
         foreach (var entProto in _prototypeManager.EnumeratePrototypes<EntityPrototype>())
         {
-            if(!entProto.TryGetComponent<SpriteStackingComponent>(out var spriteStackingComponent, _componentFactory))
+            if (!entProto.TryGetComponent<SpriteStackingComponent>(out var spriteStackingComponent, _componentFactory))
                 continue;
 
             var currPath = spriteStackingComponent.Path;
 
             if (currPath == ResPath.Empty)
             {
-                if(!entProto.TryGetComponent<SpriteComponent>(out var spriteComponent, _componentFactory) || 
-                   spriteComponent.BaseRSI is null)
+                if (!entProto.TryGetComponent<SpriteComponent>(out var spriteComponent, _componentFactory) ||
+                    spriteComponent.BaseRSI is null)
                     continue;
-                
+
                 currPath = spriteComponent.BaseRSI.Path;
             }
-            
-            if(!_resourceCache.TryGetResource<SpriteStackingResource>(currPath, out var spriteStackingResource))
+
+            if (!_resourceCache.TryGetResource<SpriteStackingResource>(currPath, out var spriteStackingResource))
                 continue;
-            
+
             if (!StackManifest.TryGetValue(currPath, out var state))
             {
                 state = new SpriteStackingContainerEntry(
-                    new Dictionary<string, Vector2i>(), 
-                    spriteStackingResource.Data.Metadata.Height, 
+                    new Dictionary<string, Vector2i>(),
+                    spriteStackingResource.Data.Metadata.Height,
                     spriteStackingResource.Data.Metadata.Size
-                    );
+                );
                 StackManifest.Add(currPath, state);
             }
 
             foreach (var (stateName, stateTexture) in spriteStackingResource.Data.States)
             {
-                var stateBox = new UIBox2i(0,0, stateTexture.Width, stateTexture.Height);
+                var stateBox = new UIBox2i(0, 0, stateTexture.Width, stateTexture.Height);
                 var boxTranslated = new Vector2i(widthShift, heightShift);
-                
+
                 stateTexture.Blit(stateBox, rawImage, boxTranslated);
-                
+
                 state.States.Add(stateName, boxTranslated);
                 widthShift += stateTexture.Width;
                 heightMax = Math.Max(heightMax, stateTexture.Height);
             }
         }
-        
+
         AtlasTexture = _clyde.LoadTextureFromImage(rawImage, "SpriteStackingAtlas");
         return;
-        
+
         using (var stream = _resourceManager.UserData.OpenWrite(new ResPath("/text.png")))
         {
             rawImage.SaveAsPng(stream);

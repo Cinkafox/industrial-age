@@ -6,5 +6,5 @@ namespace Content.Shared.Movement;
 public sealed partial class InputMoverComponent : Component
 {
     [ViewVariables, AutoNetworkedField] public MoveButtons PushedButtons;
-    [ViewVariables, AutoNetworkedField] public bool Enabled = true;
+    [ViewVariables, AutoNetworkedField] public bool MovementEnabled;
 }
