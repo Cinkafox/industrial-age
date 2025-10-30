@@ -1,5 +1,6 @@
 using Content.Client.SpriteStacking.Overlays;
 using Content.Shared.ContentVariables;
+using Content.Shared.Tile;
 using Robust.Client;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
@@ -20,29 +21,47 @@ public sealed class SpriteStackingSystem : EntitySystem
     [Dependency] private readonly IGameController _gameController = default!;
     [Dependency] private readonly IOverlayManager _overlayManager = default!;
     [Dependency] private readonly IResourceCache _resourceCache = default!;
+    [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
 
     private readonly SpriteStackingTextureContainer _spriteStackingTextureContainer = new();
+    private readonly TileTextureContainer _tileTextureContainer = new();
+    
 
     public override void Initialize()
     {
         _configurationManager.OnValueChanged(CCVars.StackRenderEnabled, OnRenderEnabledChanged, true);
 
         _overlayManager.AddOverlay(new SpriteStackingOverlay(_spriteStackingTextureContainer));
-        _overlayManager.AddOverlay(new TileTransformOverlay());
+        _overlayManager.AddOverlay(new TileTransformOverlay(_tileTextureContainer));
         _overlayManager.AddOverlay(new EntTransformOverlay());
 
-        try
-        {
-            _spriteStackingTextureContainer.RebuildAtlasTexture();
-        }
-        catch (Exception e)
-        {
-            Log.Error(e.Message);
-            Log.Error(e.StackTrace ?? "?");
-            _gameController.Shutdown();
-        }
+        UpdateTileAtlasTexture();
+        UpdateAtlasTexture();
 
         SubscribeLocalEvent<SpriteStackingComponent, ComponentInit>(OnInit);
+        
+        _prototypeManager.PrototypesReloaded += OnPrototypesReloaded;
+    }
+
+    private void OnPrototypesReloaded(PrototypesReloadedEventArgs args)
+    {
+        if (args.TryGetModified<EntityPrototype>(out var modified))
+        {
+            foreach (var prototype in modified)
+            {
+                var proto = _prototypeManager.Index<EntityPrototype>(prototype);
+                if (!proto.Components.TryGetComponent<SpriteStackingComponent>(Factory, out _))
+                    continue;
+
+                UpdateAtlasTexture();
+                break;
+            }
+        }
+
+        if (args.TryGetModified<ContentTileDefinition>(out _))
+        {
+            UpdateTileAtlasTexture();
+        }
     }
 
     private void OnRenderEnabledChanged(bool obj)
@@ -75,6 +94,40 @@ public sealed class SpriteStackingSystem : EntitySystem
             Log.Error("Path not found!");
             RemComp<SpriteStackingComponent>(ent);
         }
+    }
+    
+    public void UpdateTileAtlasTexture()
+    {
+        try
+        {
+            _tileTextureContainer.RebuildAtlasTexture();
+        }
+        catch (Exception e)
+        {
+            Log.Error("Error while reloading atlas tile texture for sprite stacking!");
+            Log.Error(e.Message);
+            Log.Error(e.StackTrace ?? "?");
+            _gameController.Shutdown();
+        }
+        
+        Log.Info("Atlas tile texture loaded!");
+    }
+
+    private void UpdateAtlasTexture()
+    {
+        try
+        {
+            _spriteStackingTextureContainer.RebuildAtlasTexture();
+        }
+        catch (Exception e)
+        {
+            Log.Error("Error while reloading atlas texture for sprite stacking!");
+            Log.Error(e.Message);
+            Log.Error(e.StackTrace ?? "?");
+            _gameController.Shutdown();
+        }
+        
+        Log.Info("Atlas texture loaded!");
     }
 
     public override void Update(float frameTime)

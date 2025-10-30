@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Numerics;
+using Robust.Client;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Utility;
@@ -7,6 +8,7 @@ using Robust.Shared.Configuration;
 using Robust.Shared.ContentPack;
 using Robust.Shared.Map;
 using Robust.Shared.Profiling;
+using Robust.Shared.Prototypes;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Color = Robust.Shared.Maths.Color;
@@ -18,20 +20,20 @@ public sealed class TileTransformOverlay : GridOverlay
     [Dependency] private readonly IConfigurationManager _configurationManager = default!;
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly ProfManager _profManager = default!;
-    
+
     private readonly DrawingSpriteStackingContext _drawingContext;
     private readonly TileTextureContainer _tileTextureContainer;
 
     private readonly MapSystem _mapSystem;
     private readonly TransformSystem _transformSystem;
 
-    public TileTransformOverlay()
+    public TileTransformOverlay(TileTextureContainer tileTextureContainer)
     {
+        _tileTextureContainer = tileTextureContainer;
         IoCManager.InjectDependencies(this);
         _transformSystem = _entityManager.System<TransformSystem>();
         _mapSystem = _entityManager.System<MapSystem>();
-        _tileTextureContainer = new TileTextureContainer();
-        _tileTextureContainer._genTextureAtlas();
+        
         _drawingContext = new(1024*16, 2, SpriteStackingOverlay.TransformContext, _tileTextureContainer);
     }
 
@@ -96,7 +98,7 @@ public sealed class TileTextureContainer : ITextureContainer
         return null;
     }
     
-    internal void _genTextureAtlas()
+    internal void RebuildAtlasTexture()
     {
         _tileRegions.Clear();
 
